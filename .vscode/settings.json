@@ -1,0 +1,6 @@
+{
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "rome.rome",
+    "javascript.format.enable": false,
+    "typescript.format.enable": false
+}
