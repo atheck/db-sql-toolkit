@@ -4,9 +4,11 @@ interface MigrationOptions {
 	database: Database;
 	targetVersion: number;
 	getCurrentVersion: (database: Database) => Promise<number>;
-	updateVersion: (database: Database) => Promise<void>;
-	migrationMap: [version: number, apply: (database: Database) => Promise<void>][];
+	updateVersion: (database: Database, version: number) => Promise<void>;
+	migrationMap: Migration[];
 }
+
+type Migration = [version: number, apply: (database: Database) => Promise<void>];
 
 async function migrate({
 	database,
@@ -21,7 +23,16 @@ async function migrate({
 		return;
 	}
 
-	for (const [nextVersion, apply] of migrationMap) {
+	const sortedMigrationMap = sortMigrationsByVersion(migrationMap);
+	const lastMigration = sortedMigrationMap.at(-1);
+
+	if (!lastMigration || lastMigration[0] < targetVersion) {
+		throw new Error("Target version cannot be reached.");
+	}
+
+	let migratedToVersion = currentVersion;
+
+	for (const [nextVersion, apply] of sortedMigrationMap) {
 		if (nextVersion > targetVersion) {
 			break;
 		}
@@ -29,10 +40,16 @@ async function migrate({
 		if (currentVersion < nextVersion) {
 			// eslint-disable-next-line no-await-in-loop
 			await apply(database);
+
+			migratedToVersion = nextVersion;
 		}
 	}
 
-	await updateVersion(database);
+	await updateVersion(database, migratedToVersion);
+}
+
+function sortMigrationsByVersion(migrationMap: Migration[]): Migration[] {
+	return [...migrationMap].sort(([firstVersion], [secondVersion]) => firstVersion - secondVersion);
 }
 
 export type { MigrationOptions };
