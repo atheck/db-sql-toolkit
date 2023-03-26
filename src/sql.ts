@@ -2,17 +2,21 @@ import { BulkExecuteStatementParams, BulkStatementParams } from "./bulk";
 
 type StatementParams = [string, unknown[]];
 
-type LastIsArray = [...unknown[], unknown[]];
-type LastIsFunction<T> = [...unknown[], (data: T) => unknown[]];
+type ContainsArray<TArray> = TArray extends [infer First, ...infer Rest]
+	? First extends unknown[]
+		? TArray
+		: ContainsArray<Rest>
+	: never;
 
-function sql<T extends unknown[]>(
-	strings: TemplateStringsArray,
-	...values: T
-): T extends LastIsArray
-	? BulkExecuteStatementParams
-	: T extends LastIsFunction<infer TData>
-	? BulkStatementParams<TData>
-	: StatementParams {
+type FunctionParameter<T> = [(data: T) => unknown[]];
+
+type ReturnType<T extends unknown[]> = ContainsArray<T> extends never
+	? T extends FunctionParameter<infer TData>
+		? BulkStatementParams<TData>
+		: StatementParams
+	: BulkExecuteStatementParams;
+
+function sql<T extends unknown[]>(strings: TemplateStringsArray, ...values: T): ReturnType<T> {
 	// Typescript cannot infer the return type, that is why ts-expect-error comments are used.
 	// However, at runtime the type is inferred correctly.
 
@@ -69,21 +73,21 @@ function isNestedStatement(value: unknown): value is StatementParams {
 	return false;
 }
 
-function isBulkExecute(values: unknown[] | LastIsArray): values is LastIsArray {
-	if (values.length > 0 && Array.isArray(values.at(-1))) {
-		return true;
-	}
-
-	return false;
+function isBulkExecute<T extends unknown[]>(values: T): values is ContainsArray<T> {
+	return values.some((value) => Array.isArray(value));
 }
 
-function createBulkExecuteParams(parameters: LastIsArray, statement: string): BulkExecuteStatementParams {
-	const lastValue = parameters.at(-1);
+function createBulkExecuteParams(parameters: unknown[], statement: string): BulkExecuteStatementParams {
+	const indexOfArray = parameters.findIndex((value) => Array.isArray(value));
+	const array = parameters[indexOfArray];
+	const copy = [...parameters];
 
-	return [statement, parameters.slice(0, -1), lastValue as unknown[]];
+	copy.splice(indexOfArray, 1);
+
+	return [statement, copy, array as unknown[]];
 }
 
-function isBulkStatement<TData>(values: unknown[] | LastIsArray | LastIsFunction<TData>): values is LastIsFunction<TData> {
+function isBulkStatement<TData>(values: unknown[]): values is FunctionParameter<TData> {
 	if (values.length > 0 && typeof values.at(-1) === "function") {
 		return true;
 	}
@@ -91,7 +95,7 @@ function isBulkStatement<TData>(values: unknown[] | LastIsArray | LastIsFunction
 	return false;
 }
 
-function createBulkStatementParams<TData>(parameters: LastIsFunction<TData>, statement: string): BulkStatementParams<TData> {
+function createBulkStatementParams<TData>(parameters: FunctionParameter<TData>, statement: string): BulkStatementParams<TData> {
 	const lastValue = parameters.at(-1);
 
 	return [statement, lastValue as (data: TData) => unknown[]];

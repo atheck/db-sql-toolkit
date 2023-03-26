@@ -7,12 +7,12 @@ describe("sql", () => {
 
 		// act
 		const result = sql`
-            SELECT
-                column
-            FROM the_table
-            WHERE
-                id = ${id}
-            `;
+			SELECT
+				column
+			FROM the_table
+			WHERE
+				id = ${id}
+			`;
 
 		// assert
 		expect(result).toHaveLength(2);
@@ -25,13 +25,13 @@ describe("sql", () => {
 
 		// act
 		const result = sql`
-            SELECT
-                column
-            FROM the_table
-            WHERE
-                id = ${id}
-                AND bulk_ids IN (${bulkIds})
-            `;
+			SELECT
+				column
+			FROM the_table
+			WHERE
+				id = ${id}
+				AND bulk_ids IN (${bulkIds})
+			`;
 
 		// assert
 		expect(result).toHaveLength(3);
@@ -42,12 +42,12 @@ describe("sql", () => {
 
 		// act
 		const result = sql`
-            INSERT INTO the_table (
-                column_1
-                , column_2
-                , column_3
-            ) VALUES (${getValues})
-            `;
+			INSERT INTO the_table (
+				column_1
+				, column_2
+				, column_3
+			) VALUES (${getValues})
+			`;
 
 		// assert
 		expect(result).toHaveLength(2);
@@ -57,17 +57,17 @@ describe("sql", () => {
 	it("works without parameters", () => {
 		// act
 		const [statement, parameters] = sql`
-            SELECT
-                column
-            FROM the_table
-            `;
+			SELECT
+				column
+			FROM the_table
+			`;
 
 		// assert
 		expect(statement).toBe(`
-            SELECT
-                column
-            FROM the_table
-            `);
+			SELECT
+				column
+			FROM the_table
+			`);
 		expect(parameters).toHaveLength(0);
 	});
 
@@ -78,21 +78,21 @@ describe("sql", () => {
 
 		// act
 		const [statement, parameters] = sql`
-            UPDATE the_table
-            SET
-                column = ${value}
-            WHERE
-                "id" = ${id}
-            `;
+			UPDATE the_table
+			SET
+				column = ${value}
+			WHERE
+				"id" = ${id}
+			`;
 
 		// assert
 		expect(statement).toBe(`
-            UPDATE the_table
-            SET
-                column = ?
-            WHERE
-                "id" = ?
-            `);
+			UPDATE the_table
+			SET
+				column = ?
+			WHERE
+				"id" = ?
+			`);
 		expect(parameters).toStrictEqual([value, id]);
 	});
 
@@ -104,23 +104,52 @@ describe("sql", () => {
 
 		// act
 		const [statement, parameters, bulkKeys] = sql`
-            UPDATE the_table
-            SET
-                column = ${value}
-            WHERE
-                id = ${id}
-                AND bulk_ids IN (${bulkParameters})
-            `;
+			UPDATE the_table
+			SET
+				column = ${value}
+			WHERE
+				id = ${id}
+				AND bulk_ids IN (${bulkParameters})
+			`;
 
 		// assert
 		expect(statement).toBe(`
-            UPDATE the_table
-            SET
-                column = ?
-            WHERE
-                id = ?
-                AND bulk_ids IN (?)
-            `);
+			UPDATE the_table
+			SET
+				column = ?
+			WHERE
+				id = ?
+				AND bulk_ids IN (?)
+			`);
+		expect(parameters).toStrictEqual([value, id]);
+		expect(bulkKeys).toStrictEqual(bulkParameters);
+	});
+
+	it("works with bulk execute parameters even if bulk parameters is not the last parameter", () => {
+		// arrange
+		const id = 1;
+		const value = "some value";
+		const bulkParameters = [1, 2, 3];
+
+		// act
+		const [statement, parameters, bulkKeys] = sql`
+			UPDATE the_table
+			SET
+				column = ${value}
+			WHERE
+				bulk_ids IN (${bulkParameters})
+				AND id = ${id}
+			`;
+
+		// assert
+		expect(statement).toBe(`
+			UPDATE the_table
+			SET
+				column = ?
+			WHERE
+				bulk_ids IN (?)
+				AND id = ?
+			`);
 		expect(parameters).toStrictEqual([value, id]);
 		expect(bulkKeys).toStrictEqual(bulkParameters);
 	});
@@ -130,43 +159,43 @@ describe("sql", () => {
 
 		// act
 		const [statement, getParameters] = sql`
-            INSERT INTO the_table (
-                column_1
-                , column_2
-                , column_3
-            )
-            VALUES (${getValues})
-            `;
+			INSERT INTO the_table (
+				column_1
+				, column_2
+				, column_3
+			)
+			VALUES (${getValues})
+			`;
 
 		// assert
 		expect(statement).toBe(`
-            INSERT INTO the_table (
-                column_1
-                , column_2
-                , column_3
-            )
-            VALUES (?)
-            `);
+			INSERT INTO the_table (
+				column_1
+				, column_2
+				, column_3
+			)
+			VALUES (?)
+			`);
 		expect(getParameters).toBe(getValues);
 	});
 
 	it("integrates another SQL statement into a new one", () => {
 		// arrange
 		const firstStatement = sql`
-            FIRST STATEMENT
-        `;
+			FIRST STATEMENT
+		`;
 
 		// act
 		const [statement] = sql`
-            ${firstStatement}
-            WHERE ...
-        `;
+			${firstStatement}
+			WHERE ...
+		`;
 
 		// assert
 		expect(statement).toBe(`
-            FIRST STATEMENT
-            WHERE ...
-        `);
+			FIRST STATEMENT
+			WHERE ...
+		`);
 	});
 
 	it("integrates an empty SQL statement into a new one", () => {
@@ -175,15 +204,15 @@ describe("sql", () => {
 
 		// act
 		const [statement, parameters] = sql`
-            ${firstStatement}
-            WHERE ...
-        `;
+			${firstStatement}
+			WHERE ...
+		`;
 
 		// assert
 		expect(statement).toBe(`
-            ${""}
-            WHERE ...
-        `);
+			${""}
+			WHERE ...
+		`);
 		expect(parameters).toStrictEqual([]);
 	});
 
@@ -192,26 +221,26 @@ describe("sql", () => {
 		const firstStatementParam = "first";
 		const secondStatementParam = "second";
 		const firstStatement = sql`
-            FIRST STATEMENT ${firstStatementParam} ${"literal value"}
-        `;
+			FIRST STATEMENT ${firstStatementParam} ${"literal value"}
+		`;
 		const secondStatement = sql`
-            SECOND STATEMENT ${secondStatementParam}
-        `;
+			SECOND STATEMENT ${secondStatementParam}
+		`;
 		const param = "param";
 
 		// act
 		const [statement, parameters] = sql`
-            ${firstStatement}
-            WHERE ${param}
-            ${secondStatement}
-        `;
+			${firstStatement}
+			WHERE ${param}
+			${secondStatement}
+		`;
 
 		// assert
 		expect(statement).toBe(`
-            FIRST STATEMENT ? ?
-            WHERE ?
-            SECOND STATEMENT ?
-        `);
+			FIRST STATEMENT ? ?
+			WHERE ?
+			SECOND STATEMENT ?
+		`);
 		expect(parameters).toStrictEqual([firstStatementParam, "literal value", param, secondStatementParam]);
 	});
 
@@ -221,13 +250,13 @@ describe("sql", () => {
 
 		// act
 		const [statement, parameters] = sql`
-            value like '${sqlLiteral(literal)}'
-        `;
+			value like '${sqlLiteral(literal)}'
+		`;
 
 		// assert
 		expect(statement).toBe(`
-            value like 'value'
-        `);
+			value like 'value'
+		`);
 		expect(parameters).toStrictEqual([]);
 	});
 });
