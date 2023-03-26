@@ -5,10 +5,10 @@ interface MigrationOptions<TDatabase extends Database> {
 	targetVersion: number;
 	getCurrentVersion: (database: TDatabase) => Promise<number>;
 	updateVersion: (database: TDatabase, version: number) => Promise<void>;
-	migrationMap: Migration[];
+	migrationMap: Migration<TDatabase>[];
 }
 
-type Migration = [version: number, apply: (database: Database) => Promise<void>];
+type Migration<TDatabase> = [version: number, apply: (database: TDatabase) => Promise<void>];
 
 async function migrate<TDatabase extends Database>({
 	database,
@@ -48,7 +48,7 @@ async function migrate<TDatabase extends Database>({
 	await updateVersion(database, migratedToVersion);
 }
 
-function sortMigrationsByVersion(migrationMap: Migration[]): Migration[] {
+function sortMigrationsByVersion<TDatabase>(migrationMap: Migration<TDatabase>[]): Migration<TDatabase>[] {
 	return [...migrationMap].sort(([firstVersion], [secondVersion]) => firstVersion - secondVersion);
 }
 
