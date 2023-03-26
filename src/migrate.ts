@@ -1,22 +1,22 @@
 import { Database } from "./Database";
 
-interface MigrationOptions {
-	database: Database;
+interface MigrationOptions<TDatabase extends Database> {
+	database: TDatabase;
 	targetVersion: number;
-	getCurrentVersion: (database: Database) => Promise<number>;
-	updateVersion: (database: Database, version: number) => Promise<void>;
+	getCurrentVersion: (database: TDatabase) => Promise<number>;
+	updateVersion: (database: TDatabase, version: number) => Promise<void>;
 	migrationMap: Migration[];
 }
 
 type Migration = [version: number, apply: (database: Database) => Promise<void>];
 
-async function migrate({
+async function migrate<TDatabase extends Database>({
 	database,
 	targetVersion,
 	getCurrentVersion,
 	updateVersion,
 	migrationMap,
-}: MigrationOptions): Promise<void> {
+}: MigrationOptions<TDatabase>): Promise<void> {
 	const currentVersion = await getCurrentVersion(database);
 
 	if (currentVersion === targetVersion) {
