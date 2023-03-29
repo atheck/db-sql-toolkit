@@ -4,7 +4,9 @@ type StatementParams = [string, unknown[]];
 
 type ContainsArray<TArray> = TArray extends [infer First, ...infer Rest]
 	? First extends unknown[]
-		? TArray
+		? First extends StatementParams
+			? ContainsArray<Rest>
+			: TArray
 		: ContainsArray<Rest>
 	: never;
 
@@ -96,7 +98,7 @@ function isBulkStatement<TData>(values: unknown[]): values is FunctionParameter<
 }
 
 function createBulkStatementParams<TData>(parameters: FunctionParameter<TData>, statement: string): BulkStatementParams<TData> {
-	const lastValue = parameters.at(-1);
+	const lastValue = parameters[0];
 
 	return [statement, lastValue as (data: TData) => unknown[]];
 }

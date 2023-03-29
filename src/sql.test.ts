@@ -179,23 +179,57 @@ describe("sql", () => {
 		expect(getParameters).toBe(getValues);
 	});
 
-	it("integrates another SQL statement into a new one", () => {
+	it("integrates a SQL statement into a new one", () => {
 		// arrange
 		const firstStatement = sql`
 			FIRST STATEMENT
 		`;
 
 		// act
-		const [statement] = sql`
+		const result = sql`
 			${firstStatement}
-			WHERE ...
+			WHERE
+				name = ${"name"}
 		`;
 
+		const [statement, parameters] = result;
+
 		// assert
+		expect(result).toHaveLength(2);
 		expect(statement).toBe(`
 			FIRST STATEMENT
-			WHERE ...
+			WHERE
+				name = ?
 		`);
+		expect(parameters).toStrictEqual(["name"]);
+	});
+
+	it("integrates a SQL statement into a bulk statement", () => {
+		// arrange
+		const firstStatement = sql`
+			FIRST STATEMENT
+		`;
+
+		// act
+		const result = sql`
+			${firstStatement}
+			WHERE
+				name = ${"name"}
+				AND id IN (${[1, 2, 3]})
+		`;
+
+		const [statement, parameters, bulkParameters] = result;
+
+		// assert
+		expect(result).toHaveLength(3);
+		expect(statement).toBe(`
+			FIRST STATEMENT
+			WHERE
+				name = ?
+				AND id IN (?)
+		`);
+		expect(parameters).toStrictEqual(["name"]);
+		expect(bulkParameters).toStrictEqual([1, 2, 3]);
 	});
 
 	it("integrates an empty SQL statement into a new one", () => {
