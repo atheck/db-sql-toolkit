@@ -84,8 +84,6 @@ async function upgradeDatabase(database: Database): Promise<void> {
     await migrate({
         database,
         targetVersion: 3,
-        getCurrentVersion,
-        updateVersion,
         migrationMap: [
             [1, createDatabase],
             [2, updateToVersion2],
@@ -94,6 +92,22 @@ async function upgradeDatabase(database: Database): Promise<void> {
     });
 }
 
+
+
+async function createDatabase(database: Database): Promise<void> {
+    // Create the initial database.
+}
+
+// updateToVersion2 and updateToVersion3 are omitted.
+```
+
+See [Database](#database) for type information.
+
+It calls all required upgrade functions in the correct order. In the example above, to upgrade the database from version 2 to 3, the function `updateToVersion3` will be called.
+
+By default it uses the `db_version` table (and creates it if needed) to store and update the current version of the database. You can change this by passing your own `getCurrentVersion` and `updateVersion` functions to the `migrate` function:
+
+```ts
 async function getCurrentVersion(database: Database): Promise<number> {
     // Get the current version of the database.
 
@@ -103,17 +117,7 @@ async function getCurrentVersion(database: Database): Promise<number> {
 async function updateVersion(database: Database, version: number): Promise<void> {
     // Write the new version into the database.
 }
-
-async function createDatabase(database: Database): Promise<void> {
-    // Create the initial database.
-}
-
-// updateToVersion2 and updateToVersion3 are omitted.
 ```
-
-It calls all required upgrade functions in the correct order. In the example above, to upgrade the database from version 2 to 3, the function `updateToVersion3` will be called.
-
-See [Database](#database) for type information.
 
 ## Types
 

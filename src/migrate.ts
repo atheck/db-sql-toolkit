@@ -1,10 +1,11 @@
 import { Database } from "./Database";
+import { sql } from "./sql";
 
 interface MigrationOptions<TDatabase extends Database> {
 	database: TDatabase;
 	targetVersion: number;
-	getCurrentVersion: (database: TDatabase) => Promise<number>;
-	updateVersion: (database: TDatabase, version: number) => Promise<void>;
+	getCurrentVersion?: ((database: TDatabase) => Promise<number>) | null;
+	updateVersion?: ((database: TDatabase, version: number) => Promise<void>) | null;
 	migrationMap: Migration<TDatabase>[];
 }
 
@@ -17,7 +18,10 @@ async function migrate<TDatabase extends Database>({
 	updateVersion,
 	migrationMap,
 }: MigrationOptions<TDatabase>): Promise<void> {
-	const currentVersion = await getCurrentVersion(database);
+	const getDbVersion = getCurrentVersion ?? defaultGetDbVersion;
+	const updateDbVersion = updateVersion ?? defaultUpdateVersion;
+
+	const currentVersion = await getDbVersion(database);
 
 	if (currentVersion === targetVersion) {
 		return;
@@ -45,11 +49,50 @@ async function migrate<TDatabase extends Database>({
 		}
 	}
 
-	await updateVersion(database, migratedToVersion);
+	await updateDbVersion(database, migratedToVersion);
 }
 
 function sortMigrationsByVersion<TDatabase>(migrationMap: Migration<TDatabase>[]): Migration<TDatabase>[] {
 	return [...migrationMap].sort(([firstVersion], [secondVersion]) => firstVersion - secondVersion);
+}
+
+interface DbVersionTable {
+	version: number;
+}
+
+async function defaultGetDbVersion(database: Database): Promise<number> {
+	try {
+		const versions = await database.getRows<DbVersionTable>(...sql`SELECT version FROM db_version`);
+
+		if (versions.length === 0) {
+			return -1;
+		}
+
+		const currentVersion = versions.map((version) => version.version).reduce((prev, current) => Math.max(prev, current), 0);
+
+		return currentVersion;
+	} catch {
+		await createDbVersionTable(database);
+
+		return -1;
+	}
+}
+
+async function defaultUpdateVersion(database: Database, version: number): Promise<void> {
+	await database.executeSqlCommand(...sql`INSERT OR REPLACE INTO db_version (version) VALUES (${version})`);
+}
+
+async function createDbVersionTable(database: Database): Promise<void> {
+	await database.executeSqlCommand(
+		...sql`
+			CREATE TABLE IF NOT EXISTS db_version (
+				version INTEGER NOT NULL,
+				PRIMARY KEY (
+					version
+				)
+			);
+		`,
+	);
 }
 
 export type { MigrationOptions };
