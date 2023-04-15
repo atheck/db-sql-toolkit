@@ -119,6 +119,14 @@ async function updateVersion(database: Database, version: number): Promise<void>
 }
 ```
 
+Optionally you can pass a `writeLog` function to the `migrate` function, e.g. to print the current and updated version of the database:
+
+```ts
+function writeLog(message: string): void {
+    // Log the message.
+}
+```
+
 ## Types
 
 ### Database

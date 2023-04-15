@@ -7,6 +7,7 @@ interface MigrationOptions<TDatabase extends Database> {
 	getCurrentVersion?: ((database: TDatabase) => Promise<number>) | null;
 	updateVersion?: ((database: TDatabase, version: number) => Promise<void>) | null;
 	migrationMap: Migration<TDatabase>[];
+	writeLog?: (message: string) => void;
 }
 
 type Migration<TDatabase> = [version: number, apply: (database: TDatabase) => Promise<void>];
@@ -17,11 +18,14 @@ async function migrate<TDatabase extends Database>({
 	getCurrentVersion,
 	updateVersion,
 	migrationMap,
+	writeLog,
 }: MigrationOptions<TDatabase>): Promise<void> {
 	const getDbVersion = getCurrentVersion ?? defaultGetDbVersion;
 	const updateDbVersion = updateVersion ?? defaultUpdateVersion;
 
 	const currentVersion = await getDbVersion(database);
+
+	writeLog?.(`Current database version: ${currentVersion}`);
 
 	if (currentVersion === targetVersion) {
 		return;
@@ -50,6 +54,8 @@ async function migrate<TDatabase extends Database>({
 	}
 
 	await updateDbVersion(database, migratedToVersion);
+
+	writeLog?.(`Updated database to version ${migratedToVersion}`);
 }
 
 function sortMigrationsByVersion<TDatabase>(migrationMap: Migration<TDatabase>[]): Migration<TDatabase>[] {
