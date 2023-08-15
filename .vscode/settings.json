@@ -1,6 +1,9 @@
 {
-    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+		"source.organizeImports": true
+	},
     "editor.defaultFormatter": "rome.rome",
+    "editor.formatOnSave": true,
     "javascript.format.enable": false,
-    "typescript.format.enable": false
+    "typescript.format.enable": false,
 }

@@ -1,5 +1,5 @@
 {
-    "extends": ["heck/node", "heck/groupImports", "heck/complexity"],
+    "extends": ["heck/node", "heck/complexity", "heck/noFormatting", "heck/excludeRome"],
     "rules": {
         "array-bracket-newline": "off",
         "array-bracket-spacing": "off",
