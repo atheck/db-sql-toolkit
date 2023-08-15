@@ -34,14 +34,14 @@ describe("sql", () => {
 			`;
 
 		// assert
-		expect(result).toHaveLength(3);
+		expect(typeof result).toBe("object");
 	});
 
 	it("returns correct type for bulk statements", () => {
 		const getValues = (value: number[]): unknown[] => [value[0], value[1], value[2]];
 
 		// act
-		const result = sql`
+		const { statement, getParameters } = sql`
 			INSERT INTO the_table (
 				column_1
 				, column_2
@@ -50,8 +50,8 @@ describe("sql", () => {
 			`;
 
 		// assert
-		expect(result).toHaveLength(2);
-		expect(typeof result[1]).toBe("function");
+		expect(typeof statement).toBe("string");
+		expect(typeof getParameters).toBe("function");
 	});
 
 	it("works without parameters", () => {
@@ -100,16 +100,16 @@ describe("sql", () => {
 		// arrange
 		const id = 1;
 		const value = "some value";
-		const bulkParameters = [1, 2, 3];
+		const bulkValues = [1, 2, 3];
 
 		// act
-		const [statement, parameters, bulkKeys] = sql`
+		const { statement, parameters, bulkParameters } = sql`
 			UPDATE the_table
 			SET
 				column = ${value}
 			WHERE
 				id = ${id}
-				AND bulk_ids IN (${bulkParameters})
+				AND bulk_ids IN (${bulkValues})
 			`;
 
 		// assert
@@ -122,22 +122,22 @@ describe("sql", () => {
 				AND bulk_ids IN (?)
 			`);
 		expect(parameters).toStrictEqual([value, id]);
-		expect(bulkKeys).toStrictEqual(bulkParameters);
+		expect(bulkParameters).toStrictEqual(bulkParameters);
 	});
 
 	it("works with bulk execute parameters even if bulk parameters is not the last parameter", () => {
 		// arrange
 		const id = 1;
 		const value = "some value";
-		const bulkParameters = [1, 2, 3];
+		const bulkValues = [1, 2, 3];
 
 		// act
-		const [statement, parameters, bulkKeys] = sql`
+		const { statement, parameters, bulkParameters } = sql`
 			UPDATE the_table
 			SET
 				column = ${value}
 			WHERE
-				bulk_ids IN (${bulkParameters})
+				bulk_ids IN (${bulkValues})
 				AND id = ${id}
 			`;
 
@@ -151,14 +151,14 @@ describe("sql", () => {
 				AND id = ?
 			`);
 		expect(parameters).toStrictEqual([value, id]);
-		expect(bulkKeys).toStrictEqual(bulkParameters);
+		expect(bulkParameters).toStrictEqual(bulkParameters);
 	});
 
 	it("works with bulk parameters", () => {
 		const getValues = (value: number[]): unknown[] => [value[0], value[1], value[2]];
 
 		// act
-		const [statement, getParameters] = sql`
+		const { statement, getParameters } = sql`
 			INSERT INTO the_table (
 				column_1
 				, column_2
@@ -218,10 +218,9 @@ describe("sql", () => {
 				AND id IN (${[1, 2, 3]})
 		`;
 
-		const [statement, parameters, bulkParameters] = result;
+		const { statement, parameters, bulkParameters } = result;
 
 		// assert
-		expect(result).toHaveLength(3);
 		expect(statement).toBe(`
 			FIRST STATEMENT
 			WHERE

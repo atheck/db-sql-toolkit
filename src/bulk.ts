@@ -1,7 +1,16 @@
 import { Database } from "./Database";
 
-type BulkStatementParams<T> = [string, (data: T) => unknown[]];
-type BulkExecuteStatementParams = [string, unknown[], unknown[]];
+interface BulkStatementParams<T> {
+	statement: string;
+	getParameters: (data: T) => unknown[];
+}
+
+interface BulkExecuteStatementParams {
+	statement: string;
+	parameters: unknown[];
+	bulkParameters: unknown[];
+	bulkParametersIndex: number;
+}
 
 /**
  * Inserts data into a database in as few operations as possible.
@@ -12,7 +21,7 @@ type BulkExecuteStatementParams = [string, unknown[], unknown[]];
 async function bulkInsertEntities<T>(
 	database: Database,
 	entities: T[],
-	[statement, getParameters]: BulkStatementParams<T>,
+	{ statement, getParameters }: BulkStatementParams<T>,
 ): Promise<void> {
 	if (!entities[0]) {
 		return;
@@ -65,21 +74,23 @@ async function bulkGetRows<TData>(database: Database, executeParams: BulkExecute
 
 async function bulkDo<TData>(
 	database: Database,
-	[statement, keys, bulkKeys]: BulkExecuteStatementParams,
+	{ statement, parameters, bulkParameters, bulkParametersIndex }: BulkExecuteStatementParams,
 	op: (statement: string, parameters: unknown[]) => Promise<TData>,
 ): Promise<TData[]> {
-	if (bulkKeys.length === 0) {
+	if (bulkParameters.length === 0) {
 		return [];
 	}
 
-	ensurePlaceholderCount(statement, keys.length + 1);
+	ensurePlaceholderCount(statement, parameters.length + 1);
 
-	const lastParameterPlaceholderIndex = statement.lastIndexOf("?");
-	const statementToLastPlaceholder = statement.slice(0, lastParameterPlaceholderIndex);
-	const statementFromLastPlaceholder = statement.slice(lastParameterPlaceholderIndex + 1);
+	const parameterPlaceholderIndex = findNthPlaceholder(statement, bulkParametersIndex);
+	const statementToLastPlaceholder = statement.slice(0, parameterPlaceholderIndex);
+	const statementFromLastPlaceholder = statement.slice(parameterPlaceholderIndex + 1);
+	const keysBeforeBulkKeys = parameters.slice(0, bulkParametersIndex);
+	const keysAfterBulkKeys = parameters.slice(bulkParametersIndex);
 
-	const chunkSize = database.MaxVariableNumber - keys.length;
-	const allBulkKeys = [...bulkKeys];
+	const chunkSize = database.MaxVariableNumber - parameters.length;
+	const allBulkKeys = [...bulkParameters];
 
 	const promises: Promise<TData>[] = [];
 
@@ -88,7 +99,7 @@ async function bulkDo<TData>(
 		const parametersStatement = Array.from({ length: chunkBulkKeys.length }).fill("?").join(",");
 		const fullStatement = `${statementToLastPlaceholder}${parametersStatement}${statementFromLastPlaceholder}`;
 
-		promises.push(op(fullStatement, [...keys, ...chunkBulkKeys]));
+		promises.push(op(fullStatement, [...keysBeforeBulkKeys, ...chunkBulkKeys, ...keysAfterBulkKeys]));
 	}
 
 	const results = await Promise.all(promises);
@@ -104,6 +115,23 @@ function ensurePlaceholderCount(statement: string, expectedCount: number): void 
 	}
 }
 
-export type { BulkStatementParams, BulkExecuteStatementParams };
+function findNthPlaceholder(statement: string, placeholderIndex: number): number {
+	let position = 0;
+	let currentIndex = -1;
 
-export { bulkInsertEntities, bulkExecuteCommand, bulkGetRows };
+	for (let i = 0; i <= placeholderIndex; i++) {
+		currentIndex = statement.indexOf("?", position);
+
+		if (currentIndex === -1) {
+			return -1;
+		}
+
+		position = currentIndex + 1;
+	}
+
+	return currentIndex;
+}
+
+export type { BulkExecuteStatementParams, BulkStatementParams };
+
+export { bulkExecuteCommand, bulkGetRows, bulkInsertEntities };

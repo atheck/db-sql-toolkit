@@ -86,7 +86,12 @@ function createBulkExecuteParams(parameters: unknown[], statement: string): Bulk
 
 	copy.splice(indexOfArray, 1);
 
-	return [statement, copy, array as unknown[]];
+	return {
+		statement,
+		parameters: copy,
+		bulkParameters: array as unknown[],
+		bulkParametersIndex: indexOfArray,
+	};
 }
 
 function isBulkStatement<TData>(values: unknown[]): values is FunctionParameter<TData> {
@@ -100,7 +105,10 @@ function isBulkStatement<TData>(values: unknown[]): values is FunctionParameter<
 function createBulkStatementParams<TData>(parameters: FunctionParameter<TData>, statement: string): BulkStatementParams<TData> {
 	const lastValue = parameters[0];
 
-	return [statement, lastValue as (data: TData) => unknown[]];
+	return {
+		statement,
+		getParameters: lastValue,
+	};
 }
 
 interface SqlLiteral {
