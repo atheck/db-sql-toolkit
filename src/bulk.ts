@@ -1,4 +1,4 @@
-import { Database } from "./Database";
+import { CountRow, Database, countPropertyName } from "./Database";
 
 interface BulkStatementParams<T> {
 	statement: string;
@@ -72,6 +72,35 @@ async function bulkGetRows<TData>(database: Database, executeParams: BulkExecute
 	return results.flat();
 }
 
+/**
+ * Gets the total count of rows from a database in as few operations as possible.
+ * @param database The database.
+ * @param executeParams The tuple consisting of the SQL statement, the parameters of the "WHERE" clause, and the parameters of the "IN" clause.
+ * @returns The total count of rows.
+ * @example
+ * ```ts
+ * const priorities = ["1", "2", "3"];
+ * const statement = sql`
+ *   SELECT COUNT(*)
+ *   FROM process
+ *   WHERE
+ *     priority IN (${priorities})
+ * `;
+ * const count = await bulkGetCount(database, statement)
+ * ```
+ */
+async function bulkGetCount(database: Database, executeParams: BulkExecuteStatementParams): Promise<number> {
+	const results = await bulkDo<CountRow[]>(database, executeParams, database.getRows);
+
+	let totalCount = 0;
+
+	for (const rows of results) {
+		totalCount += rows[0]?.[countPropertyName] ?? 0;
+	}
+
+	return totalCount;
+}
+
 async function bulkDo<TData>(
 	database: Database,
 	{ statement, parameters, bulkParameters, bulkParametersIndex }: BulkExecuteStatementParams,
@@ -134,4 +163,4 @@ function findNthPlaceholder(statement: string, placeholderIndex: number): number
 
 export type { BulkExecuteStatementParams, BulkStatementParams };
 
-export { bulkExecuteCommand, bulkGetRows, bulkInsertEntities };
+export { bulkExecuteCommand, bulkGetCount, bulkGetRows, bulkInsertEntities };

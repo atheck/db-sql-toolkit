@@ -73,6 +73,10 @@ Executes a SQL statement in as few operations as possible.
 
 Selects entities in as few operations as possible.
 
+### bulkGetCount
+
+Gets the total number of entities in as few operations as possible. You have to select `COUNT(*)` in the SQL statement.
+
 ### migrate
 
 With the help of the `migrate` function you can execute database upgrades.

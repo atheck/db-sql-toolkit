@@ -1,5 +1,5 @@
-import { Database } from "./Database";
-import { bulkExecuteCommand, bulkGetRows, bulkInsertEntities } from "./bulk";
+import { Database, countPropertyName } from "./Database";
+import { bulkExecuteCommand, bulkGetCount, bulkGetRows, bulkInsertEntities } from "./bulk";
 import { sql } from "./sql";
 
 const mockDatabase: Database = {
@@ -235,6 +235,29 @@ describe("Helpers", () => {
 
 			// assert
 			expect(result).toStrictEqual([1, 2, 3, 4, 5, 6]);
+		});
+	});
+
+	describe("bulkGetCount", () => {
+		it("sums up all counts", async () => {
+			// arrange
+			const statement = "SELECT COUNT(*) IN (?)";
+			// more than 20 variables
+			const bulkParameters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+			const mockGetRows = mockDatabase.getRows as jest.Mock;
+
+			mockGetRows
+				.mockResolvedValueOnce([{ [countPropertyName]: 5 }])
+				// Only takes the first result row
+				.mockResolvedValueOnce([{ [countPropertyName]: 12 }, { [countPropertyName]: 1 }])
+				// Zero without a result row
+				.mockResolvedValueOnce([]);
+
+			// act
+			const result = await bulkGetCount(mockDatabase, { statement, parameters: [], bulkParameters, bulkParametersIndex: 0 });
+
+			// assert
+			expect(result).toBe(17);
 		});
 	});
 

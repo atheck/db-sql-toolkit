@@ -4,4 +4,12 @@ interface Database {
 	getRows: <T>(statement: string, parameters: unknown[]) => Promise<T[]>;
 }
 
-export type { Database };
+const countPropertyName = "COUNT(*)";
+
+interface CountRow {
+	[countPropertyName]: number;
+}
+
+export type { CountRow, Database };
+
+export { countPropertyName };
