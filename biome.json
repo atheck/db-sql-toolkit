@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": [
+    "./node_modules/eslint-config-heck/biomeLinting.json"
+  ],
+  "organizeImports": {
+    "enabled": true
+  },
+  "formatter": {
+    "lineWidth": 130
+  }
+}
