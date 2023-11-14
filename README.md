@@ -29,6 +29,41 @@ The `sql` function returns a tuple consisting of the statement and an array of p
 
 **Hint:** You can get syntax highlighting in VS Code by installing an extension: [es6-string-html](https://marketplace.visualstudio.com/items?itemName=Tobermory.es6-string-html)
 
+#### Nesting
+
+You can nest `sql` statements:
+
+```js
+const where = sql`
+    id = ${1234}
+`;
+const statement = sql`
+    SELECT
+        name
+        , version
+        , author
+    FROM package
+    WHERE
+        ${where}
+`;
+```
+
+### SQL literals
+
+If you want to use variables as SQL literals (where no variables are supported), you can use the `sqlLiteral` function:
+
+```js
+const concatCharacter = "|";
+const statement = sql`
+    SELECT
+        GROUP_CONCAT(name, '${sqlLiteral(concatCharacter)}') AS package_names
+    FROM package
+    GROUP BY author
+`;
+```
+
+This inserts the variable `concatCharacter` as a literal into the SQL statement.
+
 ### bulkInsertEntities
 
 Insert many entities in as few operations as possible.
