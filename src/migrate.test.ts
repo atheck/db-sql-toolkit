@@ -161,4 +161,46 @@ describe("migrate", () => {
 		// assert
 		await expect(fails).rejects.toThrow("Target version cannot be reached.");
 	});
+
+	it("does nothing without migrations and no target version", async () => {
+		// arrange
+		const mockGetVersion = jest.fn().mockResolvedValue(1);
+		const mockUpdateVersion = jest.fn().mockResolvedValue(null);
+
+		// act
+		await migrate({
+			database,
+			getCurrentVersion: mockGetVersion,
+			updateVersion: mockUpdateVersion,
+			migrationMap: [],
+		});
+
+		// assert
+		expect(mockGetVersion).toHaveBeenCalledWith(database);
+		expect(mockUpdateVersion).not.toHaveBeenCalled();
+	});
+
+	it("calls all migrations without a target version", async () => {
+		// arrange
+		const mockGetVersion = jest.fn().mockResolvedValue(1);
+		const mockUpdateVersion = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion2 = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion3 = jest.fn().mockResolvedValue(null);
+
+		// act
+		await migrate({
+			database,
+			getCurrentVersion: mockGetVersion,
+			updateVersion: mockUpdateVersion,
+			migrationMap: [
+				[2, mockUpdateToVersion2],
+				[3, mockUpdateToVersion3],
+			],
+		});
+
+		// assert
+		expect(mockUpdateToVersion2).toHaveBeenCalledWith(database);
+		expect(mockUpdateToVersion3).toHaveBeenCalledWith(database);
+		expect(mockUpdateVersion).toHaveBeenCalledWith(database, 3);
+	});
 });

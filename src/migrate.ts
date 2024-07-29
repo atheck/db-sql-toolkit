@@ -3,7 +3,7 @@ import { sql } from "./sql";
 
 interface MigrationOptions<TDatabase extends Database> {
 	database: TDatabase;
-	targetVersion: number;
+	targetVersion?: number;
 	getCurrentVersion?: ((database: TDatabase) => Promise<number>) | null;
 	updateVersion?: ((database: TDatabase, version: number) => Promise<void>) | null;
 	migrationMap: Migration<TDatabase>[];
@@ -34,7 +34,17 @@ async function migrate<TDatabase extends Database>({
 	const sortedMigrationMap = sortMigrationsByVersion(migrationMap);
 	const lastMigration = sortedMigrationMap.at(-1);
 
-	if (!lastMigration || lastMigration[0] < targetVersion) {
+	if (!lastMigration) {
+		if (targetVersion !== undefined) {
+			throw new Error("Target version cannot be reached.");
+		}
+
+		return;
+	}
+
+	targetVersion ??= lastMigration[0];
+
+	if (lastMigration[0] < targetVersion) {
 		throw new Error("Target version cannot be reached.");
 	}
 

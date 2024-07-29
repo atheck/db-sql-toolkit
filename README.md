@@ -122,6 +122,7 @@ import { migrate, Database } from "db-sql-toolkit";
 async function upgradeDatabase(database: Database): Promise<void> {
     await migrate({
         database,
+        // The targetVersion parameter is optional. If you omit it, the migrationMap will be executed until the last version.
         targetVersion: 3,
         migrationMap: [
             [1, createDatabase],
