@@ -1,8 +1,9 @@
-import { Database } from "./Database";
+import type { Database } from "./Database";
 import { migrate } from "./migrate";
 
 describe("migrate", () => {
 	const database: Database = {
+		// biome-ignore lint/style/useNamingConvention: Constant
 		MaxVariableNumber: 10,
 		executeSqlCommand: jest.fn(),
 		getRows: jest.fn(),

@@ -1,8 +1,9 @@
-import { Database, countPropertyName } from "./Database";
+import { type Database, countPropertyName } from "./Database";
 import { bulkExecuteCommand, bulkGetCount, bulkGetRows, bulkInsertEntities } from "./bulk";
 import { sql } from "./sql";
 
 const mockDatabase: Database = {
+	// biome-ignore lint/style/useNamingConvention: Constant
 	MaxVariableNumber: 10,
 	executeSqlCommand: jest.fn(async (): Promise<void> => undefined),
 	getRows: jest.fn(),
@@ -227,8 +228,8 @@ describe("Helpers", () => {
 			// more than 10 variables
 			const bulkParameters = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
-			(mockDatabase.getRows as jest.Mock).mockResolvedValueOnce([1, 2, 3]);
-			(mockDatabase.getRows as jest.Mock).mockResolvedValueOnce([4, 5, 6]);
+			jest.mocked(mockDatabase.getRows).mockResolvedValueOnce([1, 2, 3]);
+			jest.mocked(mockDatabase.getRows).mockResolvedValueOnce([4, 5, 6]);
 
 			// act
 			const result = await bulkGetRows(mockDatabase, { statement, parameters, bulkParameters, bulkParametersIndex: 3 });
@@ -244,7 +245,7 @@ describe("Helpers", () => {
 			const statement = "SELECT COUNT(*) IN (?)";
 			// more than 20 variables
 			const bulkParameters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-			const mockGetRows = mockDatabase.getRows as jest.Mock;
+			const mockGetRows = jest.mocked(mockDatabase.getRows);
 
 			mockGetRows
 				.mockResolvedValueOnce([{ [countPropertyName]: 5 }])

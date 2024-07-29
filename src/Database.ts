@@ -1,7 +1,8 @@
 interface Database {
+	// biome-ignore lint/style/useNamingConvention: Constant
 	MaxVariableNumber: number;
 	executeSqlCommand: (statement: string, parameters: unknown[]) => Promise<void>;
-	getRows: <T>(statement: string, parameters: unknown[]) => Promise<T[]>;
+	getRows: <TData>(statement: string, parameters: unknown[]) => Promise<TData[]>;
 }
 
 const countPropertyName = "COUNT(*)";

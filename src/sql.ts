@@ -1,24 +1,24 @@
-import { BulkExecuteStatementParams, BulkStatementParams } from "./bulk";
+import type { BulkExecuteStatementParams, BulkStatementParams } from "./bulk";
 
 type StatementParams = [string, unknown[]];
 
-type ContainsArray<TArray> = TArray extends [infer First, ...infer Rest]
-	? First extends unknown[]
-		? First extends StatementParams
-			? ContainsArray<Rest>
+type ContainsArray<TArray> = TArray extends [infer TFirst, ...infer TRest]
+	? TFirst extends unknown[]
+		? TFirst extends StatementParams
+			? ContainsArray<TRest>
 			: TArray
-		: ContainsArray<Rest>
+		: ContainsArray<TRest>
 	: never;
 
-type FunctionParameter<T> = [(data: T) => unknown[]];
+type FunctionParameter<TData> = [(data: TData) => unknown[]];
 
-type ReturnType<T extends unknown[]> = ContainsArray<T> extends never
-	? T extends FunctionParameter<infer TData>
-		? BulkStatementParams<TData>
+type ReturnType<TData extends unknown[]> = ContainsArray<TData> extends never
+	? TData extends FunctionParameter<infer TParameter>
+		? BulkStatementParams<TParameter>
 		: StatementParams
 	: BulkExecuteStatementParams;
 
-function sql<T extends unknown[]>(strings: TemplateStringsArray, ...values: T): ReturnType<T> {
+function sql<TData extends unknown[]>(strings: TemplateStringsArray, ...values: TData): ReturnType<TData> {
 	// Typescript cannot infer the return type, that is why ts-expect-error comments are used.
 	// However, at runtime the type is inferred correctly.
 
@@ -75,7 +75,7 @@ function isNestedStatement(value: unknown): value is StatementParams {
 	return false;
 }
 
-function isBulkExecute<T extends unknown[]>(values: T): values is ContainsArray<T> {
+function isBulkExecute<TData extends unknown[]>(values: TData): values is ContainsArray<TData> {
 	return values.some((value) => Array.isArray(value));
 }
 

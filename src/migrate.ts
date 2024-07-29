@@ -1,4 +1,4 @@
-import { Database } from "./Database";
+import type { Database } from "./Database";
 import { sql } from "./sql";
 
 interface MigrationOptions<TDatabase extends Database> {

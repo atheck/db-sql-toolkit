@@ -1,8 +1,8 @@
-import { CountRow, Database, countPropertyName } from "./Database";
+import { type CountRow, type Database, countPropertyName } from "./Database";
 
-interface BulkStatementParams<T> {
+interface BulkStatementParams<TData> {
 	statement: string;
-	getParameters: (data: T) => unknown[];
+	getParameters: (data: TData) => unknown[];
 }
 
 interface BulkExecuteStatementParams {
@@ -18,10 +18,10 @@ interface BulkExecuteStatementParams {
  * @param entities The collection of data to insert.
  * @param param2 A tuple consisting of the "INSERT INTO" SQL statement a function to get the parameters for one entity. The number of parameters must be equal for all entities.
  */
-async function bulkInsertEntities<T>(
+async function bulkInsertEntities<TData>(
 	database: Database,
-	entities: T[],
-	{ statement, getParameters }: BulkStatementParams<T>,
+	entities: TData[],
+	{ statement, getParameters }: BulkStatementParams<TData>,
 ): Promise<void> {
 	if (!entities[0]) {
 		return;
@@ -35,7 +35,7 @@ async function bulkInsertEntities<T>(
 
 	const chunkEntities = [...entities];
 
-	let chunk: T[] = [];
+	let chunk: TData[] = [];
 	const promises: Promise<void>[] = [];
 
 	while (chunkEntities.length > 0) {
