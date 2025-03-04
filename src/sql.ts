@@ -41,7 +41,7 @@ function sql<TData extends unknown[]>(strings: TemplateStringsArray, ...values: 
 		}
 	}
 
-	// eslint-disable-next-line unicorn/prefer-at
+	// biome-ignore lint/nursery/useAtIndex: TemplateStringsArray does not support at method
 	statementParts.push(strings[strings.length - 1] ?? "");
 
 	const statement = statementParts.join("");
@@ -89,6 +89,7 @@ function createBulkExecuteParams(parameters: unknown[], statement: string): Bulk
 	return {
 		statement,
 		parameters: copy,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 		bulkParameters: array as unknown[],
 		bulkParametersIndex: indexOfArray,
 	};

@@ -35,7 +35,7 @@ async function bulkInsertEntities<TData>(
 
 	const chunkEntities = [...entities];
 
-	let chunk: TData[] = [];
+	let chunk: TData[];
 	const promises: Promise<void>[] = [];
 
 	while (chunkEntities.length > 0) {
