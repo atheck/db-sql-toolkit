@@ -1,14 +1,14 @@
 import { type CountRow, type Database, countPropertyName } from "./Database";
 
-interface BulkStatementParams<TData> {
+interface BulkStatementParams<TData, TParams extends unknown[] = unknown[]> {
 	statement: string;
-	getParameters: (data: TData) => unknown[];
+	getParameters: (data: TData) => TParams;
 }
 
-interface BulkExecuteStatementParams {
+interface BulkExecuteStatementParams<TParams extends unknown[] = unknown[]> {
 	statement: string;
-	parameters: unknown[];
-	bulkParameters: unknown[];
+	parameters: TParams;
+	bulkParameters: TParams;
 	bulkParametersIndex: number;
 }
 
@@ -35,7 +35,7 @@ async function bulkInsertEntities<TData>(
 
 	const chunkEntities = [...entities];
 
-	let chunk: TData[] = [];
+	let chunk: TData[];
 	const promises: Promise<void>[] = [];
 
 	while (chunkEntities.length > 0) {
@@ -57,7 +57,10 @@ async function bulkInsertEntities<TData>(
  * @param database The database.
  * @param executeParams A tuple consisting of the SQL statement, the parameters of the "WHERE" clause, and the parameters of the "IN" clause.
  */
-async function bulkExecuteCommand(database: Database, executeParams: BulkExecuteStatementParams): Promise<void> {
+async function bulkExecuteCommand<TParams extends unknown[] = unknown[]>(
+	database: Database,
+	executeParams: BulkExecuteStatementParams<TParams>,
+): Promise<void> {
 	await bulkDo(database, executeParams, database.executeSqlCommand);
 }
 
@@ -66,7 +69,10 @@ async function bulkExecuteCommand(database: Database, executeParams: BulkExecute
  * @param database The database.
  * @param executeParams The tuple consisting of the SQL statement, the parameters of the "WHERE" clause, and the parameters of the "IN" clause.
  */
-async function bulkGetRows<TData>(database: Database, executeParams: BulkExecuteStatementParams): Promise<TData[]> {
+async function bulkGetRows<TData, TParams extends unknown[] = unknown[]>(
+	database: Database,
+	executeParams: BulkExecuteStatementParams<TParams>,
+): Promise<TData[]> {
 	const results = await bulkDo<TData[]>(database, executeParams, database.getRows);
 
 	return results.flat();
@@ -89,7 +95,10 @@ async function bulkGetRows<TData>(database: Database, executeParams: BulkExecute
  * const count = await bulkGetCount(database, statement)
  * ```
  */
-async function bulkGetCount(database: Database, executeParams: BulkExecuteStatementParams): Promise<number> {
+async function bulkGetCount<TParams extends unknown[] = unknown[]>(
+	database: Database,
+	executeParams: BulkExecuteStatementParams<TParams>,
+): Promise<number> {
 	const results = await bulkDo<CountRow[]>(database, executeParams, database.getRows);
 
 	let totalCount = 0;
@@ -101,9 +110,9 @@ async function bulkGetCount(database: Database, executeParams: BulkExecuteStatem
 	return totalCount;
 }
 
-async function bulkDo<TData>(
+async function bulkDo<TData, TParams extends unknown[] = unknown[]>(
 	database: Database,
-	{ statement, parameters, bulkParameters, bulkParametersIndex }: BulkExecuteStatementParams,
+	{ statement, parameters, bulkParameters, bulkParametersIndex }: BulkExecuteStatementParams<TParams>,
 	op: (statement: string, parameters: unknown[]) => Promise<TData>,
 ): Promise<TData[]> {
 	if (bulkParameters.length === 0) {

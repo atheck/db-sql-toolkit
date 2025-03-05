@@ -242,12 +242,10 @@ describe("sql", () => {
 		`;
 
 		// assert
-		/* eslint-disable @typescript-eslint/no-unnecessary-template-expression -- Required to get the exact same result */
 		expect(statement).toBe(`
 			${""}
 			WHERE ...
 		`);
-		/* eslint-enable @typescript-eslint/no-unnecessary-template-expression */
 		expect(parameters).toStrictEqual([]);
 	});
 
