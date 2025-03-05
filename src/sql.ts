@@ -12,7 +12,7 @@ type ContainsArray<TArray> = TArray extends [infer TFirst, ...infer TRest]
 
 type FunctionParameter<TData, TParams extends unknown[]> = [(data: TData) => TParams];
 
-type ReturnType<TData extends unknown[], TParams extends unknown[]> = ContainsArray<TData> extends never
+type SqlReturnType<TData extends unknown[], TParams extends unknown[]> = ContainsArray<TData> extends never
 	? TData extends FunctionParameter<infer TParameter, TParams>
 		? BulkStatementParams<TParameter, TParams>
 		: StatementParams<TParams>
@@ -21,7 +21,7 @@ type ReturnType<TData extends unknown[], TParams extends unknown[]> = ContainsAr
 function sql<TData extends unknown[], TParams extends unknown[] = unknown[]>(
 	strings: TemplateStringsArray,
 	...values: TData
-): ReturnType<TData, TParams> {
+): SqlReturnType<TData, TParams> {
 	// Typescript cannot infer the return type, that is why ts-expect-error comments are used.
 	// However, at runtime the type is inferred correctly.
 
@@ -130,6 +130,6 @@ function sqlLiteral(value: string): SqlLiteral {
 	};
 }
 
-export type { StatementParams };
+export type { StatementParams, SqlReturnType };
 
 export { sql, sqlLiteral };
