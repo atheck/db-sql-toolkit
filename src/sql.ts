@@ -1,6 +1,6 @@
 import type { BulkExecuteStatementParams, BulkStatementParams } from "./bulk";
 
-type StatementParams = [string, unknown[]];
+type StatementParams<TParams extends unknown[] = unknown[]> = [string, TParams];
 
 type ContainsArray<TArray> = TArray extends [infer TFirst, ...infer TRest]
 	? TFirst extends unknown[]
@@ -10,13 +10,13 @@ type ContainsArray<TArray> = TArray extends [infer TFirst, ...infer TRest]
 		: ContainsArray<TRest>
 	: never;
 
-type FunctionParameter<TData> = [(data: TData) => unknown[]];
+type FunctionParameter<TData, TParams extends unknown[]> = [(data: TData) => TParams];
 
 type ReturnType<TData extends unknown[]> = ContainsArray<TData> extends never
-	? TData extends FunctionParameter<infer TParameter>
-		? BulkStatementParams<TParameter>
-		: StatementParams
-	: BulkExecuteStatementParams;
+	? TData extends FunctionParameter<infer TParameter, TData>
+		? BulkStatementParams<TParameter, TData>
+		: StatementParams<TData>
+	: BulkExecuteStatementParams<TData>;
 
 function sql<TData extends unknown[]>(strings: TemplateStringsArray, ...values: TData): ReturnType<TData> {
 	// Typescript cannot infer the return type, that is why ts-expect-error comments are used.
@@ -79,10 +79,14 @@ function isBulkExecute<TData extends unknown[]>(values: TData): values is Contai
 	return values.some((value) => Array.isArray(value));
 }
 
-function createBulkExecuteParams(parameters: unknown[], statement: string): BulkExecuteStatementParams {
+function createBulkExecuteParams<TParams extends unknown[]>(
+	parameters: TParams,
+	statement: string,
+): BulkExecuteStatementParams<TParams> {
 	const indexOfArray = parameters.findIndex((value) => Array.isArray(value));
 	const array = parameters[indexOfArray];
-	const copy = [...parameters];
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+	const copy = [...parameters] as TParams;
 
 	copy.splice(indexOfArray, 1);
 
@@ -90,12 +94,12 @@ function createBulkExecuteParams(parameters: unknown[], statement: string): Bulk
 		statement,
 		parameters: copy,
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-		bulkParameters: array as unknown[],
+		bulkParameters: array as TParams,
 		bulkParametersIndex: indexOfArray,
 	};
 }
 
-function isBulkStatement<TData>(values: unknown[]): values is FunctionParameter<TData> {
+function isBulkStatement<TData, TParams extends unknown[]>(values: unknown[]): values is FunctionParameter<TData, TParams> {
 	if (values.length > 0 && typeof values.at(-1) === "function") {
 		return true;
 	}
@@ -103,7 +107,10 @@ function isBulkStatement<TData>(values: unknown[]): values is FunctionParameter<
 	return false;
 }
 
-function createBulkStatementParams<TData>(parameters: FunctionParameter<TData>, statement: string): BulkStatementParams<TData> {
+function createBulkStatementParams<TData, TParams extends unknown[]>(
+	parameters: FunctionParameter<TData, TParams>,
+	statement: string,
+): BulkStatementParams<TData, TParams> {
 	const lastValue = parameters[0];
 
 	return {
