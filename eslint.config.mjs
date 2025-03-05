@@ -6,6 +6,9 @@ const config = [
 		languageOptions: {
 			sourceType: "module",
 		},
+		rules: {
+			"@typescript-eslint/no-unsafe-type-assertion": "off",
+		},
 	},
 ];
 

@@ -88,7 +88,6 @@ function createBulkExecuteParams<TParams extends unknown[]>(
 ): BulkExecuteStatementParams<TParams> {
 	const indexOfArray = parameters.findIndex((value) => Array.isArray(value));
 	const array = parameters[indexOfArray];
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 	const copy = [...parameters] as TParams;
 
 	copy.splice(indexOfArray, 1);
@@ -96,7 +95,6 @@ function createBulkExecuteParams<TParams extends unknown[]>(
 	return {
 		statement,
 		parameters: copy,
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 		bulkParameters: array as TParams,
 		bulkParametersIndex: indexOfArray,
 	};
