@@ -12,13 +12,16 @@ type ContainsArray<TArray> = TArray extends [infer TFirst, ...infer TRest]
 
 type FunctionParameter<TData, TParams extends unknown[]> = [(data: TData) => TParams];
 
-type ReturnType<TData extends unknown[]> = ContainsArray<TData> extends never
-	? TData extends FunctionParameter<infer TParameter, TData>
-		? BulkStatementParams<TParameter, TData>
-		: StatementParams<TData>
-	: BulkExecuteStatementParams<TData>;
+type ReturnType<TData extends unknown[], TParams extends unknown[]> = ContainsArray<TData> extends never
+	? TData extends FunctionParameter<infer TParameter, TParams>
+		? BulkStatementParams<TParameter, TParams>
+		: StatementParams<TParams>
+	: BulkExecuteStatementParams<TParams>;
 
-function sql<TData extends unknown[]>(strings: TemplateStringsArray, ...values: TData): ReturnType<TData> {
+function sql<TData extends unknown[], TParams extends unknown[] = unknown[]>(
+	strings: TemplateStringsArray,
+	...values: TData
+): ReturnType<TData, TParams> {
 	// Typescript cannot infer the return type, that is why ts-expect-error comments are used.
 	// However, at runtime the type is inferred correctly.
 
