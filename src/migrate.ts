@@ -1,7 +1,7 @@
 import type { Database } from "./Database";
 import { sql } from "./sql";
 
-interface MigrationOptions<TDatabase extends Database> {
+interface MigrationOptions<TDatabase extends Database<TParams>, TParams extends unknown[] = unknown[]> {
 	database: TDatabase;
 	targetVersion?: number;
 	getCurrentVersion?: ((database: TDatabase) => Promise<number>) | null;
@@ -12,14 +12,14 @@ interface MigrationOptions<TDatabase extends Database> {
 
 type Migration<TDatabase> = [version: number, apply: (database: TDatabase) => Promise<void>];
 
-async function migrate<TDatabase extends Database>({
+async function migrate<TDatabase extends Database<TParams>, TParams extends unknown[] = unknown[]>({
 	database,
 	targetVersion,
 	getCurrentVersion,
 	updateVersion,
 	migrationMap,
 	writeLog,
-}: MigrationOptions<TDatabase>): Promise<void> {
+}: MigrationOptions<TDatabase, TParams>): Promise<void> {
 	const getDbVersion = getCurrentVersion ?? defaultGetDbVersion;
 	const updateDbVersion = updateVersion ?? defaultUpdateVersion;
 
@@ -76,9 +76,9 @@ interface DbVersionTable {
 	version: number;
 }
 
-async function defaultGetDbVersion(database: Database): Promise<number> {
+async function defaultGetDbVersion<TParams extends unknown[]>(database: Database<TParams>): Promise<number> {
 	try {
-		const versions = await database.getRows<DbVersionTable>(...sql`SELECT version FROM db_version`);
+		const versions = await database.getRows<DbVersionTable>(...sql<unknown[], TParams>`SELECT version FROM db_version`);
 
 		if (versions.length === 0) {
 			return -1;
@@ -94,13 +94,13 @@ async function defaultGetDbVersion(database: Database): Promise<number> {
 	}
 }
 
-async function defaultUpdateVersion(database: Database, version: number): Promise<void> {
-	await database.executeSqlCommand(...sql`INSERT OR REPLACE INTO db_version (version) VALUES (${version})`);
+async function defaultUpdateVersion<TParams extends unknown[]>(database: Database<TParams>, version: number): Promise<void> {
+	await database.executeSqlCommand(...sql<unknown[], TParams>`INSERT OR REPLACE INTO db_version (version) VALUES (${version})`);
 }
 
-async function createDbVersionTable(database: Database): Promise<void> {
+async function createDbVersionTable<TParams extends unknown[]>(database: Database<TParams>): Promise<void> {
 	await database.executeSqlCommand(
-		...sql`
+		...sql<unknown[], TParams>`
 			CREATE TABLE IF NOT EXISTS db_version (
 				version INTEGER NOT NULL,
 				PRIMARY KEY (
