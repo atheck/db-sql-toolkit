@@ -8,4 +8,13 @@ export {
 	bulkInsertEntities,
 } from "./bulk";
 export { type MigrationOptions, migrate } from "./migrate";
-export { type StatementParams, sql, sqlLiteral, type SqlReturnType } from "./sql";
+export {
+	type StatementParams,
+	sql,
+	sqlLiteral,
+	type SqlReturnType,
+	type AllowedSqlParams,
+	type StatementSqlFnParams,
+	type BulkExecuteStatementSqlFnParams,
+	type BulkStatementSqlFnParams,
+} from "./sql";

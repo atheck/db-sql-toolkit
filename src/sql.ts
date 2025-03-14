@@ -25,7 +25,7 @@ type BulkStatementSqlFnParams<TData, TParam> = [
 ];
 type BulkExecuteStatementSqlFnParams<TParam> = (TParam | TParam[] | SqlLiteral | StatementParams<TParam>)[];
 
-type AllTypes<TData, TParam> = [
+type AllowedSqlParams<TData, TParam> = [
 	...(TParam | TParam[] | SqlLiteral | StatementParams<TParam> | FunctionParameter<TData, TParam>)[],
 ];
 
@@ -44,10 +44,10 @@ function sql<TParam = DefaultParamType>(
 
 function sql<TData, TParam = DefaultParamType>(
 	strings: TemplateStringsArray,
-	...values: AllTypes<TData, TParam>
+	...values: AllowedSqlParams<TData, TParam>
 ): StatementParams<TParam> | BulkStatementParams<TData, TParam> | BulkExecuteStatementParams<TParam> {
 	const statementParts: string[] = [];
-	const parameters: AllTypes<TData, TParam> = [];
+	const parameters: AllowedSqlParams<TData, TParam> = [];
 
 	for (const [index, value] of values.entries()) {
 		statementParts.push(strings[index] ?? "");
@@ -156,6 +156,7 @@ export type {
 	BulkExecuteStatementSqlFnParams,
 	BulkStatementSqlFnParams,
 	SqlReturnType,
+	AllowedSqlParams,
 };
 
 export { sql, sqlLiteral };
