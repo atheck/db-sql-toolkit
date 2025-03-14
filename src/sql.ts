@@ -1,32 +1,53 @@
 import type { BulkExecuteStatementParams, BulkStatementParams } from "./bulk";
 
-type StatementParams<TParams extends unknown[] = unknown[]> = [string, TParams];
+type DefaultParamType = string | number | boolean | null;
 
-type ContainsArray<TArray> = TArray extends [infer TFirst, ...infer TRest]
-	? TFirst extends unknown[]
-		? TFirst extends StatementParams
-			? ContainsArray<TRest>
-			: TArray
-		: ContainsArray<TRest>
-	: never;
+type StatementParams<TParam = DefaultParamType> = [string, TParam[]];
 
-type FunctionParameter<TData, TParams extends unknown[]> = [(data: TData) => TParams];
+type FunctionParameter<TData, TParam> = (data: TData) => TParam[];
 
-type SqlReturnType<TData extends unknown[], TParams extends unknown[]> = ContainsArray<TData> extends never
-	? TData extends FunctionParameter<infer TParameter, TParams>
-		? BulkStatementParams<TParameter, TParams>
-		: StatementParams<TParams>
-	: BulkExecuteStatementParams<TParams>;
+type SqlReturnType<TData, TParam> =
+	| StatementParams<TParam>
+	| BulkStatementParams<TData, TParam>
+	| BulkExecuteStatementParams<TParam>;
 
-function sql<TData extends unknown[], TParams extends unknown[] = unknown[]>(
+type AllowedSqlFnParam<TData, TParam> =
+	| TParam
+	| TParam[]
+	| SqlLiteral
+	| StatementParams<TParam>
+	| FunctionParameter<TData, TParam>;
+
+type StatementSqlFnParams<TParam> = (TParam | SqlLiteral | StatementParams<TParam>)[];
+type BulkStatementSqlFnParams<TData, TParam> = [
+	...(TParam | SqlLiteral | StatementParams<TParam>)[],
+	FunctionParameter<TData, TParam>,
+];
+type BulkExecuteStatementSqlFnParams<TParam> = (TParam | TParam[] | SqlLiteral | StatementParams<TParam>)[];
+
+type AllTypes<TData, TParam> = [
+	...(TParam | TParam[] | SqlLiteral | StatementParams<TParam> | FunctionParameter<TData, TParam>)[],
+];
+
+function sql<TParam = DefaultParamType>(
 	strings: TemplateStringsArray,
-	...values: TData
-): SqlReturnType<TData, TParams> {
-	// Typescript cannot infer the return type, that is why ts-expect-error comments are used.
-	// However, at runtime the type is inferred correctly.
+	...values: StatementSqlFnParams<NoInfer<TParam>>
+): StatementParams<TParam>;
+function sql<TData, TParam = DefaultParamType>(
+	strings: TemplateStringsArray,
+	...values: BulkStatementSqlFnParams<TData, NoInfer<TParam>>
+): BulkStatementParams<TData, TParam>;
+function sql<TParam = DefaultParamType>(
+	strings: TemplateStringsArray,
+	...values: BulkExecuteStatementSqlFnParams<NoInfer<TParam>>
+): BulkExecuteStatementParams<TParam>;
 
+function sql<TData, TParam = DefaultParamType>(
+	strings: TemplateStringsArray,
+	...values: AllTypes<TData, TParam>
+): StatementParams<TParam> | BulkStatementParams<TData, TParam> | BulkExecuteStatementParams<TParam> {
 	const statementParts: string[] = [];
-	const parameters: unknown[] = [];
+	const parameters: AllTypes<TData, TParam> = [];
 
 	for (const [index, value] of values.entries()) {
 		statementParts.push(strings[index] ?? "");
@@ -49,28 +70,22 @@ function sql<TData extends unknown[], TParams extends unknown[] = unknown[]>(
 
 	const statement = statementParts.join("");
 
+	if (isBulkStatement<TData, TParam>(parameters)) {
+		return createBulkStatementParams<TData, TParam>(parameters, statement);
+	}
+
 	if (isBulkExecute(parameters)) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-expect-error
 		return createBulkExecuteParams(parameters, statement);
 	}
 
-	if (isBulkStatement(parameters)) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-expect-error
-		return createBulkStatementParams(parameters, statement);
-	}
-
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-expect-error
-	return [statement, parameters];
+	return [statement, parameters as TParam[]];
 }
 
 function isSqlLiteral(value: unknown): value is SqlLiteral {
 	return typeof value === "object" && value !== null && "value" in value;
 }
 
-function isNestedStatement(value: unknown): value is StatementParams {
+function isNestedStatement<TParam>(value: unknown): value is StatementParams<TParam> {
 	if (Array.isArray(value) && value.length === 2 && typeof value[0] === "string" && Array.isArray(value[1])) {
 		return true;
 	}
@@ -78,29 +93,33 @@ function isNestedStatement(value: unknown): value is StatementParams {
 	return false;
 }
 
-function isBulkExecute<TData extends unknown[]>(values: TData): values is ContainsArray<TData> {
+function isBulkExecute<TData, TParam>(
+	values: AllowedSqlFnParam<TData, TParam>[],
+): values is BulkExecuteStatementSqlFnParams<TParam> {
 	return values.some((value) => Array.isArray(value));
 }
 
-function createBulkExecuteParams<TParams extends unknown[]>(
-	parameters: TParams,
+function createBulkExecuteParams<TParam>(
+	parameters: BulkExecuteStatementSqlFnParams<TParam>,
 	statement: string,
-): BulkExecuteStatementParams<TParams> {
+): BulkExecuteStatementParams<TParam> {
 	const indexOfArray = parameters.findIndex((value) => Array.isArray(value));
-	const array = parameters[indexOfArray];
-	const copy = [...parameters] as TParams;
+	const array = parameters[indexOfArray] as TParam[];
+	const copy = [...parameters] as TParam[];
 
 	copy.splice(indexOfArray, 1);
 
 	return {
 		statement,
 		parameters: copy,
-		bulkParameters: array as TParams,
+		bulkParameters: array,
 		bulkParametersIndex: indexOfArray,
 	};
 }
 
-function isBulkStatement<TData, TParams extends unknown[]>(values: unknown[]): values is FunctionParameter<TData, TParams> {
+function isBulkStatement<TData, TParam>(
+	values: AllowedSqlFnParam<TData, TParam>[],
+): values is BulkStatementSqlFnParams<TData, TParam> {
 	if (values.length > 0 && typeof values.at(-1) === "function") {
 		return true;
 	}
@@ -108,11 +127,11 @@ function isBulkStatement<TData, TParams extends unknown[]>(values: unknown[]): v
 	return false;
 }
 
-function createBulkStatementParams<TData, TParams extends unknown[]>(
-	parameters: FunctionParameter<TData, TParams>,
+function createBulkStatementParams<TData, TParam>(
+	parameters: BulkStatementSqlFnParams<TData, TParam>,
 	statement: string,
-): BulkStatementParams<TData, TParams> {
-	const lastValue = parameters[0];
+): BulkStatementParams<TData, TParam> {
+	const lastValue = parameters.at(-1) as FunctionParameter<TData, TParam>;
 
 	return {
 		statement,
@@ -130,6 +149,13 @@ function sqlLiteral(value: string): SqlLiteral {
 	};
 }
 
-export type { StatementParams, SqlReturnType };
+export type {
+	DefaultParamType,
+	StatementParams,
+	StatementSqlFnParams,
+	BulkExecuteStatementSqlFnParams,
+	BulkStatementSqlFnParams,
+	SqlReturnType,
+};
 
 export { sql, sqlLiteral };
