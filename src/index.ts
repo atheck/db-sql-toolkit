@@ -6,6 +6,7 @@ export {
 	bulkExecuteCommand,
 	bulkGetRows,
 	bulkInsertEntities,
+	bulkGetCount,
 } from "./bulk";
 export { type MigrationOptions, migrate } from "./migrate";
 export {
