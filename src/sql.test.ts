@@ -1,4 +1,4 @@
-import { sql, sqlLiteral } from "./sql";
+import { type DefaultParamType, sql, sqlLiteral } from "./sql";
 
 describe("sql", () => {
 	it("returns correct type for normal statements", () => {
@@ -38,7 +38,8 @@ describe("sql", () => {
 	});
 
 	it("returns correct type for bulk statements", () => {
-		const getValues = (value: number[]): unknown[] => [value[0], value[1], value[2]];
+		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		const getValues = (value: number[]): number[] => [value[0]!, value[1]!, value[2]!];
 
 		// act
 		const { statement, getParameters } = sql`
@@ -155,7 +156,8 @@ describe("sql", () => {
 	});
 
 	it("works with bulk parameters", () => {
-		const getValues = (value: number[]): unknown[] => [value[0], value[1], value[2]];
+		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		const getValues = (value: number[]): DefaultParamType[] => [value[0]!, value[1]!, value[2]!];
 
 		// act
 		const { statement, getParameters } = sql`

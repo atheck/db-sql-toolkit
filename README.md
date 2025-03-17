@@ -182,3 +182,45 @@ interface Database {
 ```
 
 `MaxVariableNumber` is the maximum number of parameters per SQL statement.
+
+### SQL Statement Parameters
+
+The first type parameter of the `sql` function is a union type of all types that can be used as parameters in a SQL statement. To create a typed version of the `sql` function and all important types function, you can use the following type definitions:
+
+```ts
+import {
+    type AllowedSqlParams,
+    type BulkExecuteStatementParams as BulkExecuteStatementParamsOriginal,
+    type BulkExecuteStatementSqlFnParams,
+    type BulkStatementParams as BulkStatementParamsOriginal,
+    type BulkStatementSqlFnParams,
+    type Database as DatabaseOriginal,
+    type SqlReturnType,
+    type StatementParams as StatementParamsOriginal,
+    type StatementSqlFnParams,
+    sql as sqlOriginal,
+} from "db-sql-toolkit";
+
+// Your allowed parameter types.
+type DatabaseParam = string | number | boolean | null | undefined;
+
+interface Database extends DatabaseOriginal<DatabaseParam> {}
+
+type StatementParams = StatementParamsOriginal<DatabaseParam>;
+type BulkStatementParams<TData> = BulkStatementParamsOriginal<TData, DatabaseParam>;
+type BulkExecuteStatementParams = BulkExecuteStatementParamsOriginal<DatabaseParam>;
+
+function sql(strings: TemplateStringsArray, ...values: StatementSqlFnParams<DatabaseParam>): StatementParams;
+function sql<TData>(strings: TemplateStringsArray, ...values: BulkStatementSqlFnParams<TData, DatabaseParam>): BulkStatementParams<TData>;
+function sql(strings: TemplateStringsArray, ...values: BulkExecuteStatementSqlFnParams<DatabaseParam>): BulkExecuteStatementParams;
+
+function sql<TData>(strings: TemplateStringsArray, ...values: AllowedSqlParams<TData, DatabaseParam>): SqlReturnType<TData, DatabaseParam> {
+    return sqlOriginal<DatabaseParam>(strings, ...values);
+}
+```
+
+The default type for the parameters is:
+
+```ts
+type DefaultParamType = string | number | boolean | null;
+```

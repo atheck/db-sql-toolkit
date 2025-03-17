@@ -1,6 +1,6 @@
 import { type Database, countPropertyName } from "./Database";
 import { bulkExecuteCommand, bulkGetCount, bulkGetRows, bulkInsertEntities } from "./bulk";
-import { sql } from "./sql";
+import { type DefaultParamType, sql } from "./sql";
 
 const mockDatabase: Database = {
 	// biome-ignore lint/style/useNamingConvention: Constant
@@ -42,7 +42,7 @@ describe("Helpers", () => {
 	afterEach(jest.clearAllMocks);
 
 	describe("bulkInsertEntities", () => {
-		const getParameters = (data: Data): unknown[] => [data.propA, data.propB, data.propC];
+		const getParameters = (data: Data): DefaultParamType[] => [data.propA, data.propB, data.propC];
 
 		it("does nothing without data", async () => {
 			// arrange
@@ -137,7 +137,7 @@ describe("Helpers", () => {
 			// arrange
 			const statement = "STATEMENT ?,?,?";
 			const parameters = [1, 2, 3];
-			const bulkParameters: unknown[] = [];
+			const bulkParameters: DefaultParamType[] = [];
 
 			// act
 			await bulkExecuteCommand(mockDatabase, { statement, parameters, bulkParameters, bulkParametersIndex: -1 });
