@@ -5,9 +5,10 @@ type DbMigrationId = string;
 
 interface ApplyMigrationsOptions<TDatabase extends Database> {
 	database: TDatabase;
+	migrations: Migration<TDatabase>[];
+	targetId?: DbMigrationId;
 	getExecutedMigrationIds?: ((database: TDatabase) => Promise<DbMigrationId[]>) | null;
 	insertMigrationId?: ((database: TDatabase, id: DbMigrationId) => Promise<void>) | null;
-	migrations: Migration<TDatabase>[];
 	writeLog?: (message: string) => void;
 }
 
@@ -18,9 +19,10 @@ interface Migration<TDatabase> {
 
 async function applyMigrations<TDatabase extends Database>({
 	database,
+	migrations,
+	targetId,
 	getExecutedMigrationIds,
 	insertMigrationId,
-	migrations,
 	writeLog,
 }: ApplyMigrationsOptions<TDatabase>): Promise<void> {
 	const executedMigrationIds = await (getExecutedMigrationIds ?? defaultGetExecutedMigrationIds)(database);
@@ -35,6 +37,9 @@ async function applyMigrations<TDatabase extends Database>({
 
 	for (const { id, apply } of migrations) {
 		if (executedMigrationIds.includes(id)) {
+			if (id === targetId) {
+				break;
+			}
 			continue;
 		}
 
@@ -44,6 +49,10 @@ async function applyMigrations<TDatabase extends Database>({
 		/* eslint-enable no-await-in-loop */
 
 		writeLog?.(`Applied migration "${id}".`);
+
+		if (id === targetId) {
+			break;
+		}
 	}
 }
 

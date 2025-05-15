@@ -104,6 +104,63 @@ describe("applyMigrations", () => {
 		expect(mockInsertMigrationId).toHaveBeenCalledWith(database, "2");
 	});
 
+	it("stops execution at target migration", async () => {
+		// arrange
+		const mockGetExecutedMigrationIds = jest.fn().mockResolvedValue([]);
+		const mockInsertMigrationId = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion1 = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion2 = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion3 = jest.fn().mockResolvedValue(null);
+
+		// act
+		await applyMigrations({
+			database,
+			getExecutedMigrationIds: mockGetExecutedMigrationIds,
+			insertMigrationId: mockInsertMigrationId,
+			migrations: [
+				{ id: "1", apply: mockUpdateToVersion1 },
+				{ id: "2", apply: mockUpdateToVersion2 },
+				{ id: "3", apply: mockUpdateToVersion3 },
+			],
+			targetId: "2",
+		});
+
+		// assert
+		expect(mockUpdateToVersion1).toHaveBeenCalledWith(database);
+		expect(mockUpdateToVersion2).toHaveBeenCalledWith(database);
+		expect(mockUpdateToVersion3).not.toHaveBeenCalled();
+		expect(mockInsertMigrationId).toHaveBeenNthCalledWith(1, database, "1");
+		expect(mockInsertMigrationId).toHaveBeenNthCalledWith(2, database, "2");
+	});
+
+	it("stops execution at target migration even if it was already applied", async () => {
+		// arrange
+		const mockGetExecutedMigrationIds = jest.fn().mockResolvedValue(["1", "2"]);
+		const mockInsertMigrationId = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion1 = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion2 = jest.fn().mockResolvedValue(null);
+		const mockUpdateToVersion3 = jest.fn().mockResolvedValue(null);
+
+		// act
+		await applyMigrations({
+			database,
+			getExecutedMigrationIds: mockGetExecutedMigrationIds,
+			insertMigrationId: mockInsertMigrationId,
+			migrations: [
+				{ id: "1", apply: mockUpdateToVersion1 },
+				{ id: "2", apply: mockUpdateToVersion2 },
+				{ id: "3", apply: mockUpdateToVersion3 },
+			],
+			targetId: "2",
+		});
+
+		// assert
+		expect(mockUpdateToVersion1).not.toHaveBeenCalled();
+		expect(mockUpdateToVersion2).not.toHaveBeenCalled();
+		expect(mockUpdateToVersion3).not.toHaveBeenCalled();
+		expect(mockInsertMigrationId).not.toHaveBeenCalled();
+	});
+
 	it("does not call apply or insertMigrationId if all migrations already executed", async () => {
 		const mockGetExecutedMigrationIds = jest.fn().mockResolvedValue(["1", "2"]);
 		const mockInsertMigrationId = jest.fn().mockResolvedValue(null);
