@@ -112,7 +112,82 @@ Selects entities in as few operations as possible.
 
 Gets the total number of entities in as few operations as possible. You have to select `COUNT(*)` in the SQL statement.
 
+### applyMigrations
+
+With the help of the `applyMigrations` function you can execute database upgrades. It executes the required migrations in the given order.
+
+```ts
+import { applyMigrations, Database } from "db-sql-toolkit";
+
+async function upgradeDatabase(database: Database): Promise<void> {
+    await applyMigrations({
+        database,
+        migrations: [
+            { id: "initial", apply: createDatabase },
+            { id: "add-feature", apply: applyAddFeature },
+            { id: "some-bugfix", apply: applySomeBugfix },
+        ]
+    });
+}
+
+async function createDatabase(database: Database): Promise<void> {
+    // Create the initial database.
+}
+```
+
+The `apply` function is called for each migration. The order of the migrations is important. The function `createDatabase` will be called first, then `applyAddFeature`, and finally `applySomeBugfix`.
+
+The `id` of the migration is used to check if the migration was already executed. If it was, the `apply` function will not be called again.
+
+The `id` of the migration can be any string. It is recommended to use a unique ID for each migration, e.g. a timestamp or a version number.
+
+Optionally you can pass a `targetId` parameter to the `applyMigrations` function. This will stop the execution of the migrations if the target ID is reached. If you omit this parameter, all migrations will be executed.
+
+```ts
+import { applyMigrations, Database } from "db-sql-toolkit";
+
+async function upgradeDatabase(database: Database): Promise<void> {
+    await applyMigrations({
+        database,
+        targetId: "add-feature",
+        migrations: [
+            { id: "initial", apply: createDatabase },
+            { id: "add-feature", apply: applyAddFeature },
+            { id: "some-bugfix", apply: applySomeBugfix },
+        ]
+    });
+}
+```
+
+Here, the migration will stop after the `add-feature` migration. The `apply` function of the `some-bugfix` migration will not be called. This may be useful for testing migrations.
+
+See [Database](#database) for type information.
+
+By default it uses the `_db_migration` table (and creates it if needed) to store and update the IDs of the executed migrations. You can change this by passing your own `getExecutedMigrationIds` and `insertMigrationId` functions to the `applyMigrations` function:
+
+```ts
+async function getExecutedMigrationIds(database: Database): Promise<string[]> {
+    // Get the IDs of the executed migrations.
+
+    return ["initial", "add-feature"];
+}
+
+async function insertMigrationId(database: Database, id: string): Promise<void> {
+    // Insert the migration ID into the database.
+}
+```
+
+Optionally you can pass a `writeLog` function to the `applyMigrations` function, e.g. to print the IDs of the executed migrations:
+
+```ts
+function writeLog(message: string): void {
+    // Log the message.
+}
+```
+
 ### migrate
+
+This is an alternative to the `applyMigrations` function. This function uses a `number` as the version of the database.
 
 With the help of the `migrate` function you can execute database upgrades.
 
@@ -131,8 +206,6 @@ async function upgradeDatabase(database: Database): Promise<void> {
         ]
     });
 }
-
-
 
 async function createDatabase(database: Database): Promise<void> {
     // Create the initial database.
