@@ -139,8 +139,8 @@ describe("applyMigrations", () => {
 			writeLog: mockWriteLog,
 		});
 
-		expect(mockWriteLog).toHaveBeenCalledWith("Previously executed migrations: 1, 2");
-		expect(mockWriteLog).toHaveBeenCalledWith('Executed migration "3"');
+		expect(mockWriteLog).toHaveBeenCalledWith('Previously applied 2 migrations, last id="2".');
+		expect(mockWriteLog).toHaveBeenCalledWith('Applied migration "3".');
 	});
 
 	it("uses default getExecutedMigrationIds and insertMigrationId if not provided", async () => {

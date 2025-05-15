@@ -25,7 +25,13 @@ async function applyMigrations<TDatabase extends Database>({
 }: ApplyMigrationsOptions<TDatabase>): Promise<void> {
 	const executedMigrationIds = await (getExecutedMigrationIds ?? defaultGetExecutedMigrationIds)(database);
 
-	writeLog?.(`Previously executed migrations: ${executedMigrationIds.join(", ")}`);
+	if (executedMigrationIds.length === 0) {
+		writeLog?.("No previously applied migrations.");
+	} else {
+		const lastId = executedMigrationIds.at(-1);
+
+		writeLog?.(`Previously applied ${executedMigrationIds.length} migrations, last id="${lastId}".`);
+	}
 
 	for (const { id, apply } of migrations) {
 		if (executedMigrationIds.includes(id)) {
@@ -37,7 +43,7 @@ async function applyMigrations<TDatabase extends Database>({
 		await (insertMigrationId ?? defaultUpdateVersion)(database, id);
 		/* eslint-enable no-await-in-loop */
 
-		writeLog?.(`Executed migration "${id}"`);
+		writeLog?.(`Applied migration "${id}".`);
 	}
 }
 
