@@ -3,7 +3,7 @@ import { sql } from "./sql";
 
 type DbMigrationId = string;
 
-interface ExecuteMigrationsOptions<TDatabase extends Database> {
+interface ApplyMigrationsOptions<TDatabase extends Database> {
 	database: TDatabase;
 	getExecutedMigrationIds?: ((database: TDatabase) => Promise<DbMigrationId[]>) | null;
 	insertMigrationId?: ((database: TDatabase, id: DbMigrationId) => Promise<void>) | null;
@@ -16,13 +16,13 @@ interface Migration<TDatabase> {
 	apply: (database: TDatabase) => Promise<void>;
 }
 
-async function executeMigrations<TDatabase extends Database>({
+async function applyMigrations<TDatabase extends Database>({
 	database,
 	getExecutedMigrationIds,
 	insertMigrationId,
 	migrations,
 	writeLog,
-}: ExecuteMigrationsOptions<TDatabase>): Promise<void> {
+}: ApplyMigrationsOptions<TDatabase>): Promise<void> {
 	const executedMigrationIds = await (getExecutedMigrationIds ?? defaultGetExecutedMigrationIds)(database);
 
 	writeLog?.(`Previously executed migrations: ${executedMigrationIds.join(", ")}`);
@@ -74,6 +74,6 @@ async function createDbVersionTable(database: Database): Promise<void> {
 	);
 }
 
-export type { ExecuteMigrationsOptions };
+export type { ApplyMigrationsOptions };
 
-export { executeMigrations };
+export { applyMigrations };

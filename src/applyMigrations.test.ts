@@ -1,9 +1,9 @@
 import type { Database } from "./Database";
-import { executeMigrations } from "./executeMigrations";
+import { applyMigrations } from "./applyMigrations";
 
 const MaxVariableNumber = 10;
 
-describe("executeMigrations", () => {
+describe("applyMigrations", () => {
 	const database: Database = {
 		MaxVariableNumber,
 		executeSqlCommand: jest.fn(),
@@ -16,7 +16,7 @@ describe("executeMigrations", () => {
 		const mockInsertMigrationId = jest.fn().mockResolvedValue(null);
 
 		// act
-		await executeMigrations({
+		await applyMigrations({
 			database,
 			getExecutedMigrationIds: mockGetExecutedMigrationIds,
 			insertMigrationId: mockInsertMigrationId,
@@ -36,7 +36,7 @@ describe("executeMigrations", () => {
 		const mockUpdateToVersion2 = jest.fn().mockResolvedValue(null);
 
 		// act
-		await executeMigrations({
+		await applyMigrations({
 			database,
 			getExecutedMigrationIds: mockGetExecutedMigrationIds,
 			insertMigrationId: mockInsertMigrationId,
@@ -60,7 +60,7 @@ describe("executeMigrations", () => {
 		const mockUpdateToVersion2 = jest.fn().mockResolvedValue(null);
 
 		// act
-		await executeMigrations({
+		await applyMigrations({
 			database,
 			getExecutedMigrationIds: mockGetExecutedMigrationIds,
 			insertMigrationId: mockInsertMigrationId,
@@ -86,7 +86,7 @@ describe("executeMigrations", () => {
 		const mockUpdateToVersion3 = jest.fn().mockResolvedValue(null);
 
 		// act
-		await executeMigrations({
+		await applyMigrations({
 			database,
 			getExecutedMigrationIds: mockGetExecutedMigrationIds,
 			insertMigrationId: mockInsertMigrationId,
@@ -110,7 +110,7 @@ describe("executeMigrations", () => {
 		const mockApply1 = jest.fn().mockResolvedValue(null);
 		const mockApply2 = jest.fn().mockResolvedValue(null);
 
-		await executeMigrations({
+		await applyMigrations({
 			database,
 			getExecutedMigrationIds: mockGetExecutedMigrationIds,
 			insertMigrationId: mockInsertMigrationId,
@@ -131,7 +131,7 @@ describe("executeMigrations", () => {
 		const mockApply = jest.fn().mockResolvedValue(null);
 		const mockWriteLog = jest.fn();
 
-		await executeMigrations({
+		await applyMigrations({
 			database,
 			getExecutedMigrationIds: mockGetExecutedMigrationIds,
 			insertMigrationId: mockInsertMigrationId,
@@ -153,7 +153,7 @@ describe("executeMigrations", () => {
 		};
 		const mockApply = jest.fn().mockResolvedValue(null);
 
-		await executeMigrations({
+		await applyMigrations({
 			database: db,
 			migrations: [{ id: "abc", apply: mockApply }],
 		});
@@ -173,7 +173,7 @@ describe("executeMigrations", () => {
 		};
 		const mockApply = jest.fn().mockResolvedValue(null);
 
-		await executeMigrations({
+		await applyMigrations({
 			database: db,
 			migrations: [{ id: "abc", apply: mockApply }],
 		});

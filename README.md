@@ -112,15 +112,15 @@ Selects entities in as few operations as possible.
 
 Gets the total number of entities in as few operations as possible. You have to select `COUNT(*)` in the SQL statement.
 
-### executeMigrations
+### applyMigrations
 
-With the help of the `executeMigrations` function you can execute database upgrades. It executes the required migrations in the given order.
+With the help of the `applyMigrations` function you can execute database upgrades. It executes the required migrations in the given order.
 
 ```ts
-import { executeMigrations, Database } from "db-sql-toolkit";
+import { applyMigrations, Database } from "db-sql-toolkit";
 
 async function upgradeDatabase(database: Database): Promise<void> {
-    await executeMigrations({
+    await applyMigrations({
         database,
         migrations: [
             { id: "initial", apply: createDatabase },
@@ -137,7 +137,7 @@ async function createDatabase(database: Database): Promise<void> {
 
 See [Database](#database) for type information.
 
-By default it uses the `_db_migration` table (and creates it if needed) to store and update the IDs of the executed migrations. You can change this by passing your own `getExecutedMigrationIds` and `insertMigrationId` functions to the `executeMigrations` function:
+By default it uses the `_db_migration` table (and creates it if needed) to store and update the IDs of the executed migrations. You can change this by passing your own `getExecutedMigrationIds` and `insertMigrationId` functions to the `applyMigrations` function:
 
 ```ts
 async function getExecutedMigrationIds(database: Database): Promise<string[]> {
@@ -151,7 +151,7 @@ async function insertMigrationId(database: Database, id: string): Promise<void> 
 }
 ```
 
-Optionally you can pass a `writeLog` function to the `executeMigrations` function, e.g. to print the IDs of the executed migrations:
+Optionally you can pass a `writeLog` function to the `applyMigrations` function, e.g. to print the IDs of the executed migrations:
 
 ```ts
 function writeLog(message: string): void {
@@ -161,7 +161,7 @@ function writeLog(message: string): void {
 
 ### migrate
 
-This is an alternative to the `executeMigrations` function. This function uses a `number` as the version of the database.
+This is an alternative to the `applyMigrations` function. This function uses a `number` as the version of the database.
 
 With the help of the `migrate` function you can execute database upgrades.
 
