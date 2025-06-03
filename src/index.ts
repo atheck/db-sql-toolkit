@@ -9,6 +9,7 @@ export {
 	bulkGetCount,
 } from "./bulk";
 export { type MigrationOptions, migrate } from "./migrate";
+export { type ApplyMigrationsOptions, applyMigrations } from "./applyMigrations";
 export {
 	type StatementParams,
 	sql,
