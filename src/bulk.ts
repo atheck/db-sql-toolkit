@@ -1,4 +1,4 @@
-import { type CountRow, type Database, countPropertyName } from "./Database";
+import { type CountRow, countPropertyName, type Database } from "./Database";
 import type { DefaultParamType } from "./sql";
 
 interface BulkStatementParams<TData, TParam = DefaultParamType> {

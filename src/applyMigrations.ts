@@ -43,10 +43,9 @@ async function applyMigrations<TDatabase extends Database>({
 			continue;
 		}
 
-		/* eslint-disable no-await-in-loop */
+		// biome-ignore lint/nursery/noAwaitInLoop: We need to keep the order
 		await apply(database);
 		await (insertMigrationId ?? defaultUpdateVersion)(database, id);
-		/* eslint-enable no-await-in-loop */
 
 		writeLog?.(`Applied migration "${id}".`);
 

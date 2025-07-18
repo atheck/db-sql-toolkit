@@ -65,7 +65,7 @@ function sql<TData, TParam = DefaultParamType>(
 		}
 	}
 
-	// biome-ignore lint/nursery/useAtIndex: TemplateStringsArray does not support at method
+	// biome-ignore lint/style/useAtIndex: TemplateStringsArray does not support at method
 	statementParts.push(strings[strings.length - 1] ?? "");
 
 	const statement = statementParts.join("");

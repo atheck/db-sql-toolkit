@@ -1,10 +1,11 @@
-import type { Database } from "./Database";
 import { applyMigrations } from "./applyMigrations";
+import type { Database } from "./Database";
 
 const MaxVariableNumber = 10;
 
 describe("applyMigrations", () => {
 	const database: Database = {
+		// biome-ignore lint/style/useNamingConvention: Given by API
 		MaxVariableNumber,
 		executeSqlCommand: jest.fn(),
 		getRows: jest.fn(),
@@ -204,6 +205,7 @@ describe("applyMigrations", () => {
 		const mockGetRows = jest.fn().mockResolvedValue([]);
 		const mockExecuteSqlCommand = jest.fn().mockResolvedValue(null);
 		const db: Database = {
+			// biome-ignore lint/style/useNamingConvention: Given by API
 			MaxVariableNumber,
 			getRows: mockGetRows,
 			executeSqlCommand: mockExecuteSqlCommand,
@@ -224,6 +226,7 @@ describe("applyMigrations", () => {
 		const mockGetRows = jest.fn().mockRejectedValue(new Error("no table"));
 		const mockExecuteSqlCommand = jest.fn().mockResolvedValue(null);
 		const db: Database = {
+			// biome-ignore lint/style/useNamingConvention: Given by API
 			MaxVariableNumber,
 			getRows: mockGetRows,
 			executeSqlCommand: mockExecuteSqlCommand,

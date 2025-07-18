@@ -1,11 +1,13 @@
-import { type Database, countPropertyName } from "./Database";
 import { bulkExecuteCommand, bulkGetCount, bulkGetRows, bulkInsertEntities } from "./bulk";
+import { countPropertyName, type Database } from "./Database";
 import { type DefaultParamType, sql } from "./sql";
 
 const mockDatabase: Database = {
 	// biome-ignore lint/style/useNamingConvention: Constant
 	MaxVariableNumber: 10,
-	executeSqlCommand: jest.fn(async (): Promise<void> => undefined),
+	executeSqlCommand: jest.fn(async (): Promise<void> => {
+		// do nothing
+	}),
 	getRows: jest.fn(),
 };
 

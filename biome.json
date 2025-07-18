@@ -1,12 +1,8 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": [
-    "eslint-config-heck/biomeJsTs"
-  ],
-  "organizeImports": {
-    "enabled": true
-  },
-  "formatter": {
-    "lineWidth": 130
-  }
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["eslint-config-heck/biomeJsTs"],
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"formatter": {
+		"lineWidth": 130
+	}
 }

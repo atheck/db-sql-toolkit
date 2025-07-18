@@ -56,7 +56,7 @@ async function migrate<TDatabase extends Database>({
 		}
 
 		if (currentVersion < nextVersion) {
-			// eslint-disable-next-line no-await-in-loop
+			// biome-ignore lint/nursery/noAwaitInLoop: We need to keep the order
 			await apply(database);
 
 			migratedToVersion = nextVersion;

@@ -38,7 +38,7 @@ describe("sql", () => {
 	});
 
 	it("returns correct type for bulk statements", () => {
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		// biome-ignore lint/style/noNonNullAssertion: Tests only
 		const getValues = (value: number[]): number[] => [value[0]!, value[1]!, value[2]!];
 
 		// act
@@ -156,7 +156,7 @@ describe("sql", () => {
 	});
 
 	it("works with bulk parameters", () => {
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		// biome-ignore lint/style/noNonNullAssertion: Tests only
 		const getValues = (value: number[]): DefaultParamType[] => [value[0]!, value[1]!, value[2]!];
 
 		// act
