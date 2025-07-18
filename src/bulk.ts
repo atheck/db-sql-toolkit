@@ -22,35 +22,38 @@ interface BulkExecuteStatementParams<TParam = DefaultParamType> {
 async function bulkInsertEntities<TData, TParam = DefaultParamType>(
 	database: Database<TParam>,
 	entities: TData[],
-	{ statement, getParameters }: BulkStatementParams<TData, TParam>,
+	...bulkStatements: BulkStatementParams<TData, TParam>[]
 ): Promise<void> {
 	if (!entities[0]) {
 		return;
 	}
 
-	ensurePlaceholderCount(statement, 1);
+	for (const { statement, getParameters } of bulkStatements) {
+		ensurePlaceholderCount(statement, 1);
 
-	const paramsPerEntity = getParameters(entities[0]).length;
-	const chunkSize = Math.floor(database.MaxVariableNumber / paramsPerEntity);
-	const parametersStatement = Array.from({ length: paramsPerEntity }).fill("?").join(",");
+		const paramsPerEntity = getParameters(entities[0]).length;
+		const chunkSize = Math.floor(database.MaxVariableNumber / paramsPerEntity);
+		const parametersStatement = Array.from({ length: paramsPerEntity }).fill("?").join(",");
 
-	const chunkEntities = [...entities];
+		const chunkEntities = [...entities];
 
-	let chunk: TData[];
-	const promises: Promise<void>[] = [];
+		let chunk: TData[];
+		const promises: Promise<void>[] = [];
 
-	while (chunkEntities.length > 0) {
-		chunk = chunkEntities.splice(0, chunkSize);
+		while (chunkEntities.length > 0) {
+			chunk = chunkEntities.splice(0, chunkSize);
 
-		const values = chunk.flatMap(getParameters);
-		const valueStatement = Array.from({ length: chunk.length }).fill(parametersStatement).join("),(");
+			const values = chunk.flatMap(getParameters);
+			const valueStatement = Array.from({ length: chunk.length }).fill(parametersStatement).join("),(");
 
-		const fullStatement = statement.replace("?", valueStatement);
+			const fullStatement = statement.replace("?", valueStatement);
 
-		promises.push(database.executeSqlCommand(fullStatement, values));
+			promises.push(database.executeSqlCommand(fullStatement, values));
+		}
+
+		// biome-ignore lint/nursery/noAwaitInLoop: We need to keep the order.
+		await Promise.all(promises);
 	}
-
-	await Promise.all(promises);
 }
 
 /**

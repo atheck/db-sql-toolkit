@@ -96,6 +96,41 @@ This function (and all bulk* functions) uses the `MaxVariableNumber` property of
 
 **Important:** To use this function you have to pass the function to get the parameters for one entity as the only parameter into the `sql` function.
 
+This function supports executing multiple statements with the same data. For example, if you want to insert the same data into two different tables, you can do it like this:
+
+```ts
+const packages: Package[] = [
+    // a lot of packages
+];
+const getParametersPackage = (package: Package): unknown[] => [
+    package.id,
+    package.name,
+    package.version,
+    package.author,
+];
+const statementPackage = sql`
+    INSERT INTO package (
+        id
+        , name
+        , version
+        , author
+    )
+    VALUES (${getParametersPackage})
+`;
+
+const getParametersAuthor = (package: Package): unknown[] => [
+    package.version,
+];
+const statementAuthor = sql`
+    INSERT INTO author (
+        author
+    )
+    VALUES (${getParametersAuthor})
+`;
+
+await bulkInsertEntities(database, packages, statementPackage, statementAuthor);
+```
+
 ### bulkExecuteCommand
 
 Executes a SQL statement in as few operations as possible.

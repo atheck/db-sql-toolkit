@@ -132,6 +132,32 @@ describe("Helpers", () => {
 			// assert
 			expect(testData).toHaveLength(4);
 		});
+
+		it("supports multiple statements", async () => {
+			// arrange
+			const firstStatement = "STATEMENT VALUES (?)";
+			const secondStatement = "OTHER STATEMENT VALUES (?)";
+
+			const firstGetParameters = (data: Data): DefaultParamType[] => [data.propA];
+			const secondGetParameters = (data: Data): DefaultParamType[] => [data.propB, data.propC];
+
+			// act
+			await bulkInsertEntities(
+				mockDatabase,
+				testData,
+				{ statement: firstStatement, getParameters: firstGetParameters },
+				{ statement: secondStatement, getParameters: secondGetParameters },
+			);
+
+			// assert
+			expect(mockDatabase.executeSqlCommand).toHaveBeenCalledTimes(2);
+			expect(mockDatabase.executeSqlCommand).toHaveBeenNthCalledWith(1, "STATEMENT VALUES (?),(?),(?),(?)", [1, 4, 7, 10]);
+			expect(mockDatabase.executeSqlCommand).toHaveBeenNthCalledWith(
+				2,
+				"OTHER STATEMENT VALUES (?,?),(?,?),(?,?),(?,?)",
+				[2, 3, 5, 6, 8, 9, 11, 12],
+			);
+		});
 	});
 
 	describe("bulkExecuteCommand", () => {
