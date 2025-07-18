@@ -307,6 +307,10 @@ import {
     type StatementParams as StatementParamsOriginal,
     type StatementSqlFnParams,
     sql as sqlOriginal,
+    bulkExecuteCommand as bulkExecuteCommandOriginal,
+    bulkGetCount as bulkGetCountOriginal,
+    bulkGetRows as bulkGetRowsOriginal,
+    bulkInsertEntities as bulkInsertEntitiesOriginal,
 } from "db-sql-toolkit";
 
 // Your allowed parameter types.
@@ -325,6 +329,11 @@ function sql(strings: TemplateStringsArray, ...values: BulkExecuteStatementSqlFn
 function sql<TData>(strings: TemplateStringsArray, ...values: AllowedSqlParams<TData, DatabaseParam>): SqlReturnType<TData, DatabaseParam> {
     return sqlOriginal<DatabaseParam>(strings, ...values);
 }
+
+const bulkGetRows: <TData>(database: Database, executeParams: BulkExecuteStatementParamsOriginal<DatabaseParam>) => Promise<TData[]> = bulkGetRowsOriginal;
+const bulkExecuteCommand: (database: Database, executeParams: BulkExecuteStatementParamsOriginal<DatabaseParam>) => Promise<void> = bulkExecuteCommandOriginal;
+const bulkInsertEntities: <TData>(database: Database, entities: TData[], ...statements: BulkStatementParamsOriginal<TData, DatabaseParam>[]) => Promise<void> = bulkInsertEntitiesOriginal;
+const bulkGetCount: (database: Database, executeParams: BulkExecuteStatementParamsOriginal<DatabaseParam>) => Promise<number> = bulkGetCountOriginal;
 ```
 
 The default type for the parameters is:
